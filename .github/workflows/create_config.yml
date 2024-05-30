@@ -18,8 +18,6 @@ jobs:
         with:
           repository: 'lj3954/quickemu-rs'
       - uses: actions/checkout@v4
-        with:
-          branch: master
       - name: Restore cache
         uses: actions/cache/restore@v4
         with:
