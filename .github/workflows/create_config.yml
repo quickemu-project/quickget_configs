@@ -14,19 +14,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Restore cache
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
         with:
-          path: target/debug/quickget_ci
+          repository: 'lj3954/quickemu-rs'
+      - uses: actions/checkout@v4
+        with:
+          branch: master
+      - name: Restore cache
+        uses: actions/cache/restore@v4
+        with:
+          path: target/release/quickget_ci
           key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install zstd
         run: sudo apt-get install -y zstd
 
-      - uses: actions/checkout@v4
       - name: Create configs
         run: |
-          ./target/debug/quickget_ci
+          ./target/release/quickget_ci
           zstd -19 -o quickget_data.json.zst quickget_data.json
           gzip -9 -k quickget_data.json
 
@@ -34,7 +39,7 @@ jobs:
         uses: amousavigourabi/push-action@v0
         with:
           message: 'ci: update quickget configurations'
-          branch: main
+          branch: master
           files: 'quickget_data.json'
 
       - name: Release archives
@@ -45,3 +50,5 @@ jobs:
           artifactContentType: 'application/octet-stream'
           body: 'Quickget configuration files (Compressed)'
           token: ${{ secrets.GITHUB_TOKEN }}
+          name: "Quickget configurations (Compressed)"
+          tag: 'daily'
