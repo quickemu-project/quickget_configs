@@ -33,20 +33,13 @@ jobs:
           zstd -19 -o quickget_data.json.zst quickget_data.json
           gzip -9 -k quickget_data.json
 
-      - name: Commit uncompressed JSON
-        uses: amousavigourabi/push-action@v0
-        with:
-          message: 'ci: update quickget configurations'
-          branch: master
-          files: 'quickget_data.json'
-
-      - name: Release archives
+      - name: Release artifacts
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: 'quickget_data.json.zst, quickget_data.json.gz'
+          artifacts: 'quickget_data.json, quickget_data.json.zst, quickget_data.json.gz'
           artifactContentType: 'application/octet-stream'
-          body: 'Quickget configuration files (Compressed)'
+          body: 'Quickget configuration files'
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: "Quickget configurations (Compressed)"
+          name: "Quickget configurations"
           tag: 'daily'
