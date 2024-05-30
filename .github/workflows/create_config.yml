@@ -1,0 +1,44 @@
+name: Create quickget configs
+
+on:
+  schedule:
+    - cron: '58 23 * * *'
+
+jobs:
+  create_configs:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: target/debug/quickget_ci
+          key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install zstd
+        run: sudo apt-get install -y zstd
+
+      - uses: actions/checkout@v4
+      - name: Create configs
+        run: |
+          ./target/debug/quickget_ci
+          zstd -19 -o quickget_data.json.zst quickget_data.json
+          gzip -9 -k quickget_data.json
+
+      - name: Commit uncompressed JSON
+        uses: amousavigourabi/push-action@v0
+        with:
+          message: 'ci: update quickget configurations'
+          branch: main
+          files: 'quickget_data.json'
+
+      - name: Release archives
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: 'quickget_data.json.zst, quickget_data.json.gz'
+          artifactContentType: 'application/octet-stream'
+          body: 'Quickget configuration files (Compressed)'
+          token: ${{ secrets.GITHUB_TOKEN }}
