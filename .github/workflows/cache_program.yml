@@ -20,3 +20,8 @@ jobs:
         with:
           path: target/debug/quickget_ci
           key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Start config generation
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          event_type: generate_configuration

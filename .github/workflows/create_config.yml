@@ -3,6 +3,9 @@ name: Create quickget configs
 on:
   schedule:
     - cron: '58 23 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [ generate_configuration ]
 
 jobs:
   create_configs:
