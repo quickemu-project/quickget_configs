@@ -29,6 +29,9 @@ Releases contain configurations used. They are formatted as follows
     "fixed_iso": [ Source ],
     "floppy": [ Source ],
     "disk_images": [ Disk ],
+    "boot_type" boot_type, // OPTIONAL
+    "tpm": true/false, // OPTIONAL
+    "ram": 1234, // OPTIONAL, IN BYTES
 }
 ```
 
@@ -56,4 +59,11 @@ WebSource is formatted as follows
     "archive_format": "archive_format", // OPTIONAL
     "file_name": "file_name", // OPTIONAL
 }
+```
+
+Boot Types can be as follows (May be changed in the future)
+
+```json
+"legacy",
+"efi" { "secure_boot": true/false }
 ```
