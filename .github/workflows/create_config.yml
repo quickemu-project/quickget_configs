@@ -24,14 +24,8 @@ jobs:
           path: target/release/quickget_ci
           key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install zstd
-        run: sudo apt-get install -y zstd
-
       - name: Create configs
-        run: |
-          ./target/release/quickget_ci
-          zstd -19 -o quickget_data.json.zst quickget_data.json
-          gzip -9 -k quickget_data.json
+        run: ./target/release/quickget_ci
 
       - name: Release artifacts
         uses: ncipollo/release-action@v1
