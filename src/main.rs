@@ -43,6 +43,7 @@ async fn main() {
         spawn(linux::BunsenLabs.to_os()),
         spawn(linux::CachyOS.to_os()),
         spawn(linux::CentOSStream.to_os()),
+        spawn(linux::ChimeraLinux.to_os()),
     ];
 
     let distros = futures::future::join_all(futures)
