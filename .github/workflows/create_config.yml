@@ -15,14 +15,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          repository: 'lj3954/quickemu-rs'
-      - uses: actions/checkout@v4
       - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: target/release/quickget_ci
-          key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/main.rs') }}
 
       - name: Create configs
         run: ./target/release/quickget_ci

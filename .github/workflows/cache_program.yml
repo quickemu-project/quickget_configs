@@ -1,16 +1,17 @@
 name: Cache quickget_ci
 
 on:
-  repository_dispatch:
-    types: [ push-event ]
+  push:
+    branches:
+      - master
 
 jobs:
   cache:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          repository: 'lj3954/quickemu-rs'
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Build
         run: cargo build --verbose --bin quickget_ci --release
@@ -19,10 +20,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target/release/quickget_ci
-          key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/main.rs') }}
 
       - name: Start config generation
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.PAT }}
           event-type: generate_configuration
