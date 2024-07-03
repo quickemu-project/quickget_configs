@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    store_data::{ArchiveFormat, Config, Distro, Source, WebSource},
+    store_data::{ArchiveFormat, ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::capture_page,
 };
 use quickemu::config::Arch;
@@ -183,6 +183,78 @@ impl Distro for Batocera {
         futures::future::join_all(futures)
             .await
             .into_iter()
+            .flatten()
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
+
+const CHIMERA_MIRROR: &str = "https://repo.chimera-linux.org/live/";
+
+pub struct ChimeraLinux;
+impl Distro for ChimeraLinux {
+    const NAME: &'static str = "chimeralinux";
+    const PRETTY_NAME: &'static str = "Chimera Linux";
+    const HOMEPAGE: Option<&'static str> = Some("https://chimera-linux.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Modern, general-purpose non-GNU Linux distribution.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let releases = capture_page(CHIMERA_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="([0-9]{8})/""#).unwrap();
+        let iso_regex = Arc::new(Regex::new(r#"href="(chimera-linux-(x86_64|aarch64|riscv64)-LIVE-[0-9]{8}-([^-]+).iso)""#).unwrap());
+
+        let releases = {
+            let mut releases = release_regex
+                .captures_iter(&releases)
+                .map(|c| c[1].parse::<u32>().unwrap())
+                .collect::<Vec<u32>>();
+            releases.sort_unstable();
+            releases.reverse();
+            let mut releases = releases.iter().map(ToString::to_string).collect::<Vec<String>>();
+            if let Some(r) = releases.get_mut(0) {
+                *r = "latest".to_string();
+            }
+            releases
+        };
+
+        let futures = releases.iter().map(|release| {
+            let url = format!("{CHIMERA_MIRROR}{release}/");
+            let checksum_url = url.clone() + "sha256sums.txt";
+            let iso_regex = iso_regex.clone();
+
+            async move {
+                let page = capture_page(&url).await?;
+                let mut checksums = ChecksumSeparation::Whitespace.build(&checksum_url).await;
+                Some(
+                    iso_regex
+                        .captures_iter(&page)
+                        .map(|c| {
+                            let iso = &c[1];
+                            let edition = c[3].to_string();
+                            let arch = match &c[2] {
+                                "x86_64" => Arch::x86_64,
+                                "aarch64" => Arch::aarch64,
+                                "riscv64" => Arch::riscv64,
+                                _ => panic!("Chimera Linux: Regex allowed an invalid architecture through"),
+                            };
+                            let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
+                            let url = format!("{url}{iso}");
+                            Config {
+                                release: Some(release.clone()),
+                                edition: Some(edition),
+                                arch,
+                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                ..Default::default()
+                            }
+                        })
+                        .collect::<Vec<Config>>(),
+                )
+            }
+        });
+
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
             .flatten()
             .collect::<Vec<Config>>()
             .into()
