@@ -120,3 +120,70 @@ impl Distro for Bazzite {
             .into()
     }
 }
+
+const CENTOS_MIRROR: &str = "https://linuxsoft.cern.ch/centos-stream/";
+const CENTOS_URL_PREFIX: &str = "https://mirrors.centos.org/mirrorlist?path=/";
+const CENTOS_URL_SUFFIX: &str = "&redirect=1&protocol=https";
+
+pub struct CentOSStream;
+impl Distro for CentOSStream {
+    const NAME: &'static str = "centos-stream";
+    const PRETTY_NAME: &'static str = "CentOS Stream";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.centos.org/centos-stream/");
+    const DESCRIPTION: Option<&'static str> =
+        Some("Continuously delivered distro that tracks just ahead of Red Hat Enterprise Linux (RHEL) development, positioned as a midstream between Fedora Linux and RHEL.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let releases = capture_page(CENTOS_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="([0-9]+)-stream/""#).unwrap();
+        let iso_regex = Arc::new(Regex::new(r#"href="(CentOS-Stream-[0-9]+-[0-9]{8}.0-[^-]+-([^-]+)\.iso)""#).unwrap());
+
+        let futures = release_regex
+            .captures_iter(&releases)
+            .flat_map(|c| {
+                let release = c[1].to_string();
+                [Arch::x86_64, Arch::aarch64]
+                    .iter()
+                    .map(|arch| {
+                        let release = release.clone();
+                        let iso_regex = iso_regex.clone();
+                        let mirror_addition = format!("{release}-stream/BaseOS/{arch}/iso/");
+                        let mirror = format!("{CENTOS_MIRROR}{mirror_addition}");
+                        let final_mirror = format!("{CENTOS_URL_PREFIX}{mirror_addition}");
+                        let checksum_url = mirror.clone() + "SHA256SUM";
+
+                        async move {
+                            let page = capture_page(&mirror).await?;
+                            let mut checksums = ChecksumSeparation::Sha256Regex.build(&checksum_url).await;
+                            Some(
+                                iso_regex
+                                    .captures_iter(&page)
+                                    .map(|c| {
+                                        let iso = &c[1];
+                                        let url = format!("{final_mirror}{iso}{CENTOS_URL_SUFFIX}");
+                                        let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
+                                        let edition = c[2].to_string();
+                                        Config {
+                                            release: Some(release.clone()),
+                                            edition: Some(edition),
+                                            arch: arch.clone(),
+                                            iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                            ..Default::default()
+                                        }
+                                    })
+                                    .collect::<Vec<Config>>(),
+                            )
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
