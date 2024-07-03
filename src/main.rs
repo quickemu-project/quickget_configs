@@ -40,6 +40,7 @@ async fn main() {
         spawn(linux::BigLinux.to_os()),
         spawn(linux::BlendOS.to_os()),
         spawn(linux::Bodhi.to_os()),
+        spawn(linux::BunsenLabs.to_os()),
     ];
 
     let distros = futures::future::join_all(futures)
