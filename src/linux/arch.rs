@@ -262,3 +262,57 @@ impl Distro for BlendOS {
         }])
     }
 }
+
+const CACHYOS_KDE_MIRROR: &str = "https://mirror.cachyos.org/ISO/kde/";
+
+pub struct CachyOS;
+impl Distro for CachyOS {
+    const NAME: &'static str = "cachyos";
+    const PRETTY_NAME: &'static str = "CachyOS";
+    const HOMEPAGE: Option<&'static str> = Some("https://cachyos.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Designed to deliver lightning-fast speeds and stability, ensuring a smooth and enjoyable computing experience every time you use it.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let page = capture_page(CACHYOS_KDE_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="([0-9]+)/""#).unwrap();
+        let iso_regex = Arc::new(Regex::new(r#"href="(cachyos-([^-]+)-linux-[0-9]+.iso)""#).unwrap());
+
+        let futures = release_regex.captures_iter(&page).map(|c| {
+            let release = c[1].to_string();
+            let mirror = format!("{CACHYOS_KDE_MIRROR}{release}/");
+            let iso_regex = iso_regex.clone();
+            async move {
+                let page = capture_page(&mirror).await?;
+                let futures = iso_regex
+                    .captures_iter(&page)
+                    .map(|c| {
+                        let edition = c[2].to_string();
+                        let url = format!("{mirror}{}", &c[1]);
+                        let checksum_url = url.clone() + ".sha256";
+                        let release = release.clone();
+                        async move {
+                            let checksum = capture_page(&checksum_url)
+                                .await
+                                .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
+                            Config {
+                                release: Some(release),
+                                edition: Some(edition),
+                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                ..Default::default()
+                            }
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                Some(futures::future::join_all(futures).await)
+            }
+        });
+
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
