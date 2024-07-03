@@ -41,74 +41,78 @@ impl Distro for FreeBSD {
 
             async move {
                 if let Some(page) = capture_page(mirror).await {
-                    Some(
-                        freebsd_regex
-                            .captures_iter(&page)
-                            .flat_map(|c| vec![(c[1].to_string(), true), (c[1].to_string(), false)])
-                            .map(|(release, vm_release)| {
-                                let arch = arch.clone();
-                                let checksum_regex = checksum_regex.clone();
-                                tokio::spawn(async move {
-                                    match vm_release {
-                                        true => {
-                                            let checksum_url = format!("{mirror}ISO-IMAGES/{release}/CHECKSUM.SHA256-FreeBSD-{release}-RELEASE-{denom}");
-                                            let checksums = build_checksums(checksum_url, checksum_regex).await;
-                                            FREEBSD_EDITIONS
-                                                .iter()
-                                                .map(|edition| {
-                                                    let iso = format!("FreeBSD-{release}-RELEASE-{denom}-{edition}.iso.xz");
-                                                    let checksum = checksums.as_ref().and_then(|cs| cs.get(&iso)).cloned();
-                                                    let url = format!("{mirror}ISO-IMAGES/{release}/{iso}");
-                                                    Config {
-                                                        guest_os: GuestOS::FreeBSD,
-                                                        iso: Some(vec![Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Xz), None))]),
-                                                        release: Some(release.to_string()),
-                                                        edition: Some(edition.to_string()),
-                                                        arch: arch.clone(),
-                                                        ..Default::default()
-                                                    }
-                                                })
-                                                .collect::<Vec<Config>>()
-                                        }
-                                        false => {
-                                            let mirror = format!(
-                                                "https://download.freebsd.org/ftp/releases/VM-IMAGES/{release}-RELEASE/{}/Latest/",
-                                                if arch == Arch::x86_64 { "amd64".to_string() } else { arch.to_string() }
-                                            );
-                                            let iso = format!("FreeBSD-{release}-RELEASE-{denom}.qcow2.xz");
-                                            let checksum_url = format!("{mirror}CHECKSUM.SHA256");
-                                            let checksum = build_checksums(checksum_url, checksum_regex)
-                                                .await
-                                                .and_then(|mut cs| cs.remove(&iso));
-                                            let url = mirror + &iso;
+                    let futures = freebsd_regex
+                        .captures_iter(&page)
+                        .flat_map(|c| {
+                            let release = c[1].to_string();
+                            let vm_image_release = release.clone();
+                            let normal_checksum_regex = checksum_regex.clone();
+                            let vm_checksum_regex = checksum_regex.clone();
 
-                                            vec![Config {
-                                                guest_os: GuestOS::FreeBSD,
-                                                disk_images: Some(vec![Disk {
-                                                    source: Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Xz), None)),
-                                                    ..Default::default()
-                                                }]),
-                                                release: Some(release.to_string()),
-                                                edition: Some("vm-image".to_string()),
-                                                arch: arch.clone(),
-                                                ..Default::default()
-                                            }]
+                            let vm_image_mirror = {
+                                let arch = if *arch == Arch::x86_64 { "amd64" } else { &arch.to_string() };
+                                format!("https://download.freebsd.org/ftp/releases/VM-IMAGES/{release}-RELEASE/{arch}/Latest/")
+                            };
+
+                            let normal_editions = tokio::spawn(async move {
+                                let checksum_url = format!("{mirror}ISO-IMAGES/{release}/CHECKSUM.SHA256-FreeBSD-{release}-RELEASE-{denom}");
+                                let mut checksums = build_checksums(checksum_url, normal_checksum_regex).await;
+                                FREEBSD_EDITIONS
+                                    .iter()
+                                    .map(|edition| {
+                                        let iso = format!("FreeBSD-{release}-RELEASE-{denom}-{edition}.iso.xz");
+                                        let checksum = checksums.as_mut().and_then(|cs| cs.remove(&iso));
+                                        let url = format!("{mirror}ISO-IMAGES/{release}/{iso}");
+                                        Config {
+                                            guest_os: GuestOS::FreeBSD,
+                                            iso: Some(vec![Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Xz), None))]),
+                                            release: Some(release.clone()),
+                                            edition: Some(edition.to_string()),
+                                            arch: arch.clone(),
+                                            ..Default::default()
                                         }
-                                    }
-                                })
-                            })
-                            .collect::<Vec<_>>(),
-                    )
+                                    })
+                                    .collect::<Vec<Config>>()
+                            });
+
+                            let vm_image = tokio::spawn(async move {
+                                let iso = format!("FreeBSD-{vm_image_release}-RELEASE-{denom}.qcow2.xz");
+                                let checksum_url = format!("{vm_image_mirror}CHECKSUM.SHA256");
+                                let checksum = build_checksums(checksum_url, vm_checksum_regex)
+                                    .await
+                                    .and_then(|mut cs| cs.remove(&iso));
+                                let url = vm_image_mirror + &iso;
+
+                                vec![Config {
+                                    guest_os: GuestOS::FreeBSD,
+                                    disk_images: Some(vec![Disk {
+                                        source: Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Xz), None)),
+                                        ..Default::default()
+                                    }]),
+                                    release: Some(vm_image_release),
+                                    edition: Some("vm-image".to_string()),
+                                    arch: arch.clone(),
+                                    ..Default::default()
+                                }]
+                            });
+                            [normal_editions, vm_image]
+                        })
+                        .collect::<Vec<_>>();
+                    Some(futures::future::join_all(futures).await)
                 } else {
                     log::warn!("Failed to fetch FreeBSD {arch} releases");
                     None
                 }
             }
         });
-        let futures = futures::future::join_all(futures).await;
-        let individual_futures = futures.into_iter().flatten().flatten().collect::<Vec<_>>();
-
-        let releases = futures::future::join_all(individual_futures).await;
-        releases.into_iter().flatten().flatten().collect::<Vec<Config>>().into()
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .flatten()
+            .flatten()
+            .collect::<Vec<Config>>()
+            .into()
     }
 }
