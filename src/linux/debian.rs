@@ -3,7 +3,7 @@ use crate::{
     utils::capture_page,
 };
 use regex::Regex;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 const ANTIX_MIRROR: &str = "https://sourceforge.net/projects/antix-linux/files/Final/";
 
@@ -76,6 +76,8 @@ impl Distro for Antix {
     }
 }
 
+const BUNSENLABS_MIRROR: &str = "https://ddl.bunsenlabs.org/ddl/";
+
 pub struct BunsenLabs;
 impl Distro for BunsenLabs {
     const NAME: &'static str = "bunsenlabs";
@@ -83,6 +85,37 @@ impl Distro for BunsenLabs {
     const HOMEPAGE: Option<&'static str> = Some("https://www.bunsenlabs.org/");
     const DESCRIPTION: Option<&'static str> = Some("Light-weight and easily customizable Openbox desktop. The project is a community continuation of CrunchBang Linux.");
     async fn generate_configs() -> Option<Vec<Config>> {
-        todo!()
+        let html = capture_page(BUNSENLABS_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="(([^-]+)-1(:?-[0-9]+)?-amd64.hybrid.iso)""#).unwrap();
+        // Gather all possible checksums
+        let checksum_regex = Regex::new(r#"href="(.*?.sha256.txt)""#).unwrap();
+
+        let checksum_futures = checksum_regex.captures_iter(&html).map(|c| {
+            let url = format!("{BUNSENLABS_MIRROR}{}", &c[1]);
+            async move { ChecksumSeparation::Whitespace.build(&url).await }
+        });
+        let mut checksums = futures::future::join_all(checksum_futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect::<HashMap<String, String>>();
+
+        release_regex
+            .captures_iter(&html)
+            .map(|c| {
+                let iso = &c[1];
+                let checksum = checksums.remove(iso);
+                let url = format!("{BUNSENLABS_MIRROR}{iso}");
+                let release = c[2].to_string();
+
+                Config {
+                    release: Some(release),
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                    ..Default::default()
+                }
+            })
+            .collect::<Vec<Config>>()
+            .into()
     }
 }
