@@ -104,9 +104,9 @@ pub enum ChecksumSeparation {
 impl ChecksumSeparation {
     pub async fn build(self, url: &str) -> Option<HashMap<String, String>> {
         let data = crate::utils::capture_page(url).await?;
-        Some(self.build_with_data(&data).await)
+        Some(self.build_with_data(&data))
     }
-    pub async fn build_with_data(self, data: &str) -> HashMap<String, String> {
+    pub fn build_with_data(self, data: &str) -> HashMap<String, String> {
         match self {
             Self::Whitespace => data
                 .lines()

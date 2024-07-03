@@ -100,6 +100,7 @@ pub struct GithubAPIValue {
     pub tag_name: String,
     pub assets: Vec<GithubAsset>,
     pub prerelease: bool,
+    pub body: String,
 }
 #[derive(Deserialize)]
 pub struct GithubAsset {

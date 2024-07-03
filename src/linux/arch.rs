@@ -120,7 +120,7 @@ impl Distro for ArcoLinux {
                 let checksums = ChecksumSeparation::CustomRegex(checksum_regex.clone(), 2, 1);
                 async move {
                     let page = capture_page(&mirror).await?;
-                    let checksums = checksums.build_with_data(&page).await;
+                    let checksums = checksums.build_with_data(&page);
 
                     let futures = iso_regex
                         .captures_iter(&page)

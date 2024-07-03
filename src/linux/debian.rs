@@ -1,6 +1,6 @@
 use crate::{
     store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
-    utils::capture_page,
+    utils::{capture_page, GatherData, GithubAPI},
 };
 use regex::Regex;
 use std::{collections::HashMap, sync::Arc};
@@ -39,7 +39,7 @@ impl Distro for Antix {
                 let main_checksums = capture_page(&checksum_mirror).await.map(skip_until_sha256).unwrap_or_default();
                 let runit_checksums = capture_page(&runit_checksum_mirror).await.map(skip_until_sha256);
                 let checksums = main_checksums + "\n" + &runit_checksums.unwrap_or_default();
-                let mut checksums = ChecksumSeparation::Whitespace.build_with_data(&checksums).await;
+                let mut checksums = ChecksumSeparation::Whitespace.build_with_data(&checksums);
 
                 let page = capture_page(&mirror).await?;
                 let iso_regex = iso_regex.clone();
@@ -114,6 +114,42 @@ impl Distro for BunsenLabs {
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                     ..Default::default()
                 }
+            })
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
+
+const CRUNCHBANG_API: &str = "https://api.github.com/repos/CBPP/cbpp/releases";
+
+pub struct CrunchbangPlusPlus;
+impl Distro for CrunchbangPlusPlus {
+    const NAME: &'static str = "crunchbang++";
+    const PRETTY_NAME: &'static str = "Crunchbangplusplus";
+    const HOMEPAGE: Option<&'static str> = Some("https://crunchbangplusplus.org/");
+    const DESCRIPTION: Option<&'static str> = Some("The classic minimal crunchbang feel, now with debian 12 bookworm.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let mut api_data = GithubAPI::gather_data(CRUNCHBANG_API).await?;
+        api_data.retain(|v| !v.prerelease);
+        api_data
+            .into_iter()
+            .take(3)
+            .filter_map(|value| {
+                let release = value.tag_name;
+                let iso = value.assets.into_iter().find(|a| a.name.contains("amd64"))?;
+                let url = iso.browser_download_url;
+                let checksum_data = value
+                    .body
+                    .lines()
+                    .skip_while(|l| !l.contains("md5sum"))
+                    .collect::<Vec<&str>>()
+                    .join("\n");
+                let checksum = ChecksumSeparation::Whitespace.build_with_data(&checksum_data).remove(&iso.name);
+                Some(Config {
+                    release: Some(release),
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                    ..Default::default()
+                })
             })
             .collect::<Vec<Config>>()
             .into()
