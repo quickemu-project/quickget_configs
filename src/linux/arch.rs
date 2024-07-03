@@ -1,12 +1,12 @@
 pub mod manjaro;
 
 use crate::{
-    store_data::{Config, Distro, Source, WebSource},
+    store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::{capture_page, GatherData, GithubAPI},
 };
 use regex::Regex;
 use serde::Deserialize;
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 const ARCHCRAFT_MIRROR: &str = "https://sourceforge.net/projects/archcraft/files/";
 
@@ -117,13 +117,10 @@ impl Distro for ArcoLinux {
                 let release = c[1].to_string();
                 let mirror = format!("{ARCOLINUX_MIRROR}{release}/");
                 let iso_regex = iso_regex.clone();
-                let checksum_regex = checksum_regex.clone();
+                let checksums = ChecksumSeparation::CustomRegex(checksum_regex.clone(), 2, 1);
                 async move {
                     let page = capture_page(&mirror).await?;
-                    let checksums = checksum_regex
-                        .captures_iter(&page)
-                        .map(|c| (c[2].to_string(), c[1].to_string()))
-                        .collect::<HashMap<String, String>>();
+                    let checksums = checksums.build_with_data(&page).await;
 
                     let futures = iso_regex
                         .captures_iter(&page)
@@ -177,11 +174,7 @@ impl Distro for ArtixLinux {
         let page = capture_page(ARTIX_MIRROR).await?;
         let iso_regex = Regex::new(r#"href="(artix-(.*?)-([^-]+-[0-9]+)-x86_64.iso)""#).unwrap();
 
-        let checksums = capture_page(&format!("{ARTIX_MIRROR}sha256sums")).await.map(|c| {
-            c.lines()
-                .filter_map(|l| l.split_once("  ").map(|(hash, file)| (file.to_string(), hash.to_string())))
-                .collect::<HashMap<String, String>>()
-        });
+        let checksums = ChecksumSeparation::Whitespace.build(&format!("{ARTIX_MIRROR}sha256sums")).await;
 
         iso_regex
             .captures_iter(&page)

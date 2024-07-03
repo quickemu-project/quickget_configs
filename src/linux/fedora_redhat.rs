@@ -1,9 +1,8 @@
 use crate::{
-    store_data::{Arch, Config, Distro, Source, WebSource},
+    store_data::{Arch, ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::capture_page,
 };
 use regex::Regex;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 const ALMA_MIRROR: &str = "https://repo.almalinux.org/almalinux/";
@@ -19,7 +18,6 @@ impl Distro for Alma {
 
         let releases_regex = Regex::new(r#"<a href="([0-9]+)/""#).unwrap();
         let iso_regex = Arc::new(Regex::new(r#"<a href="(AlmaLinux-[0-9]+-latest-(?:x86_64|aarch64)-([^-]+).iso)">"#).unwrap());
-        let checksum_regex = Arc::new(Regex::new(r#"SHA256 \(([^)]+)\) = ([0-9a-f]+)"#).unwrap());
 
         let futures = releases_regex.captures_iter(&releases).flat_map(|r| {
             let release = r[1].to_string();
@@ -28,18 +26,11 @@ impl Distro for Alma {
                 .map(|arch| {
                     let release = release.clone();
                     let iso_regex = iso_regex.clone();
-                    let checksum_regex = checksum_regex.clone();
                     let mirror = format!("{ALMA_MIRROR}{release}/isos/{arch}/");
 
                     async move {
                         let page = capture_page(&mirror).await?;
-                        let checksum_page = capture_page(&format!("{mirror}CHECKSUM")).await;
-                        let checksums = checksum_page.map(|cs| {
-                            checksum_regex
-                                .captures_iter(&cs)
-                                .map(|c| (c[1].to_string(), c[2].to_string()))
-                                .collect::<HashMap<String, String>>()
-                        });
+                        let checksums = ChecksumSeparation::Sha256Regex.build(&format!("{mirror}CHECKSUM")).await;
 
                         Some(
                             iso_regex

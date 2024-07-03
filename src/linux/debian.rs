@@ -1,9 +1,8 @@
 use crate::{
-    store_data::{Config, Distro, Source, WebSource},
+    store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::capture_page,
 };
 use regex::Regex;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 const ANTIX_MIRROR: &str = "https://sourceforge.net/projects/antix-linux/files/Final/";
@@ -20,6 +19,14 @@ impl Distro for Antix {
         let releases_regex = Regex::new(r#""name":"antiX-([0-9.]+)""#).unwrap();
         let iso_regex = Arc::new(Regex::new(r#""name":"(antiX-[0-9.]+(?:-runit)?(?:-[^_]+)?_x64-([^.]+).iso)".*?"download_url":"(.*?)""#).unwrap());
 
+        let skip_until_sha256 = |cs_data: String| {
+            cs_data
+                .lines()
+                .skip_while(|l| !l.starts_with("sha256"))
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
+
         let futures = releases_regex.captures_iter(&releases).take(3).map(|r| {
             let release = r[1].to_string();
             let mirror = format!("{ANTIX_MIRROR}antiX-{release}/");
@@ -29,17 +36,10 @@ impl Distro for Antix {
             let iso_regex = iso_regex.clone();
 
             async move {
-                let main_checksums = capture_page(&checksum_mirror).await;
-                let runit_checksums = capture_page(&runit_checksum_mirror).await;
-                let mut checksums = main_checksums
-                    .iter()
-                    .chain(runit_checksums.iter())
-                    .flat_map(|cs| {
-                        cs.lines()
-                            .skip_while(|l| !l.starts_with("sha256"))
-                            .filter_map(|l| l.split_once("  ").map(|(a, b)| (b.to_string(), a.to_string())))
-                    })
-                    .collect::<HashMap<String, String>>();
+                let main_checksums = capture_page(&checksum_mirror).await.map(skip_until_sha256).unwrap_or_default();
+                let runit_checksums = capture_page(&runit_checksum_mirror).await.map(skip_until_sha256);
+                let checksums = main_checksums + "\n" + &runit_checksums.unwrap_or_default();
+                let mut checksums = ChecksumSeparation::Whitespace.build_with_data(&checksums).await;
 
                 let page = capture_page(&mirror).await?;
                 let iso_regex = iso_regex.clone();
@@ -73,5 +73,16 @@ impl Distro for Antix {
             .flatten()
             .collect::<Vec<Config>>()
             .into()
+    }
+}
+
+pub struct BunsenLabs;
+impl Distro for BunsenLabs {
+    const NAME: &'static str = "bunsenlabs";
+    const PRETTY_NAME: &'static str = "BunsenLabs";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.bunsenlabs.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Light-weight and easily customizable Openbox desktop. The project is a community continuation of CrunchBang Linux.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        todo!()
     }
 }

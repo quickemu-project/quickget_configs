@@ -1,6 +1,9 @@
 use crate::utils::all_valid;
+use once_cell::sync::Lazy;
 pub use quickemu::config::Arch;
 pub use quickget::data_structures::{ArchiveFormat, Config, Disk, Source, WebSource, OS};
+use regex::Regex;
+use std::{collections::HashMap, sync::Arc};
 
 pub trait Distro {
     const NAME: &'static str;
@@ -88,4 +91,38 @@ pub fn extract_disk_urls(sources: Option<&[Disk]>) -> Vec<String> {
             _ => None,
         })
         .collect()
+}
+
+pub static DEFAULT_SHA256_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r#"SHA256 \(([^)]+)\) = ([0-9a-f]+)"#).unwrap());
+
+pub enum ChecksumSeparation {
+    Whitespace,
+    Sha256Regex,
+    CustomRegex(Arc<Regex>, usize, usize),
+}
+
+impl ChecksumSeparation {
+    pub async fn build(self, url: &str) -> Option<HashMap<String, String>> {
+        let data = crate::utils::capture_page(url).await?;
+        Some(self.build_with_data(&data).await)
+    }
+    pub async fn build_with_data(self, data: &str) -> HashMap<String, String> {
+        match self {
+            Self::Whitespace => data
+                .lines()
+                .filter_map(|l| {
+                    l.split_once(' ')
+                        .map(|(hash, file)| (file.trim().to_string(), hash.trim().to_string()))
+                })
+                .collect(),
+            Self::Sha256Regex => DEFAULT_SHA256_REGEX
+                .captures_iter(data)
+                .map(|c| (c[1].to_string(), c[2].to_string()))
+                .collect(),
+            Self::CustomRegex(regex, keyindex, valueindex) => regex
+                .captures_iter(data)
+                .map(|c| (c[keyindex].to_string(), c[valueindex].to_string()))
+                .collect(),
+        }
+    }
 }
