@@ -45,6 +45,7 @@ async fn main() {
         spawn(linux::CentOSStream.to_os()),
         spawn(linux::ChimeraLinux.to_os()),
         spawn(linux::CrunchbangPlusPlus.to_os()),
+        spawn(linux::Debian.to_os()),
     ];
 
     let distros = futures::future::join_all(futures)
