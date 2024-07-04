@@ -2,6 +2,7 @@ use crate::{
     store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::{capture_page, GatherData, GithubAPI},
 };
+use quickemu::config::Arch;
 use regex::Regex;
 use std::{collections::HashMap, sync::Arc};
 
@@ -151,6 +152,116 @@ impl Distro for CrunchbangPlusPlus {
                     ..Default::default()
                 })
             })
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
+
+const LATEST_DEBIAN_MIRROR: &str = "https://cdimage.debian.org/debian-cd/";
+const PREVIOUS_DEBIAN_MIRROR: &str = "https://cdimage.debian.org/cdimage/archive/";
+
+pub struct Debian;
+impl Distro for Debian {
+    const NAME: &'static str = "debian";
+    const PRETTY_NAME: &'static str = "Debian";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.debian.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Complete Free Operating System with perfect level of ease of use and stability.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let latest_html = capture_page(LATEST_DEBIAN_MIRROR).await?;
+        let previous_html = capture_page(PREVIOUS_DEBIAN_MIRROR).await?;
+        let releases_regex = Regex::new(r#"href="([0-9.]+)/""#).unwrap();
+        let live_regex = Arc::new(Regex::new(">(debian-live-[0-9.]+-amd64-([^.]+).iso)<").unwrap());
+        let netinst_regex = Arc::new(Regex::new(">(debian-[0-9].+-(?:amd64|arm64)-(netinst).iso)<").unwrap());
+
+        let latest_full_release = releases_regex.captures(&latest_html)?[1].to_string();
+        let latest_release = latest_full_release.split('.').next()?.parse::<u32>().ok()?;
+
+        let mut previous_captures = releases_regex
+            .captures_iter(&previous_html)
+            .map(|c| (c[1].to_string(), c[1].split('.').next().unwrap().parse::<u32>().unwrap()))
+            .fold(HashMap::new(), |mut acc, (full_release, release)| {
+                if acc.get(&release).map_or(true, |v: &String| {
+                    v.split('.').nth(1).unwrap().parse::<u32>().unwrap() < full_release.split('.').nth(1).unwrap().parse::<u32>().unwrap()
+                }) {
+                    acc.insert(release, full_release);
+                }
+                acc
+            });
+
+        let releases = (latest_release - 2..latest_release)
+            .filter_map(|c| previous_captures.remove(&c).map(|f| (c, f, PREVIOUS_DEBIAN_MIRROR)))
+            .chain([(latest_release, latest_full_release, LATEST_DEBIAN_MIRROR)]);
+
+        let futures = releases
+            .flat_map(|(release, full_release, mirror)| {
+                let live_mirror = format!("{mirror}{full_release}-live/amd64/iso-hybrid/");
+                let live_regex = live_regex.clone();
+                let live_configs = tokio::spawn(async move {
+                    let page = capture_page(&live_mirror).await?;
+                    let mut checksums = ChecksumSeparation::Whitespace.build(&format!("{live_mirror}SHA256SUMS")).await;
+                    Some(
+                        live_regex
+                            .captures_iter(&page)
+                            .map(|c| {
+                                let iso = &c[1];
+                                let edition = c[2].to_string();
+                                let url = format!("{live_mirror}{iso}");
+                                let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
+                                Config {
+                                    release: Some(release.to_string()),
+                                    edition: Some(edition),
+                                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                    ..Default::default()
+                                }
+                            })
+                            .collect::<Vec<Config>>(),
+                    )
+                });
+                let netinst_configs = [Arch::x86_64, Arch::aarch64]
+                    .iter()
+                    .map(|arch| {
+                        let arch_text = match arch {
+                            Arch::x86_64 => "amd64",
+                            Arch::aarch64 => "arm64",
+                            _ => unreachable!(),
+                        };
+                        let netinst_mirror = format!("{mirror}{full_release}/{arch_text}/iso-cd/");
+                        let checksum_mirror = format!("{netinst_mirror}SHA256SUMS");
+                        let netinst_regex = netinst_regex.clone();
+                        tokio::spawn(async move {
+                            let page = capture_page(&netinst_mirror).await?;
+                            let mut checksums = ChecksumSeparation::Whitespace.build(&checksum_mirror).await;
+                            Some(
+                                netinst_regex
+                                    .captures_iter(&page)
+                                    .map(|c| {
+                                        let iso = &c[1];
+                                        let edition = c[2].to_string();
+                                        let url = format!("{netinst_mirror}{iso}");
+                                        let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
+                                        Config {
+                                            release: Some(release.to_string()),
+                                            edition: Some(edition),
+                                            iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                            arch: arch.clone(),
+                                            ..Default::default()
+                                        }
+                                    })
+                                    .collect::<Vec<Config>>(),
+                            )
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                [vec![live_configs], netinst_configs]
+            })
+            .flatten();
+
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .flatten()
             .collect::<Vec<Config>>()
             .into()
     }
