@@ -94,10 +94,12 @@ pub fn extract_disk_urls(sources: Option<&[Disk]>) -> Vec<String> {
 }
 
 pub static DEFAULT_SHA256_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r#"SHA256 \(([^)]+)\) = ([0-9a-f]+)"#).unwrap());
+pub static DEFAULT_MD5_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r#"MD5 \(([^)]+)\) = ([0-9a-f]+)"#).unwrap());
 
 pub enum ChecksumSeparation {
     Whitespace,
     Sha256Regex,
+    Md5Regex,
     CustomRegex(Arc<Regex>, usize, usize),
 }
 
@@ -114,6 +116,10 @@ impl ChecksumSeparation {
                     l.split_once(' ')
                         .map(|(hash, file)| (file.trim().to_string(), hash.trim().to_string()))
                 })
+                .collect(),
+            Self::Md5Regex => DEFAULT_MD5_REGEX
+                .captures_iter(data)
+                .map(|c| (c[1].to_string(), c[2].to_string()))
                 .collect(),
             Self::Sha256Regex => DEFAULT_SHA256_REGEX
                 .captures_iter(data)

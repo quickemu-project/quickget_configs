@@ -102,3 +102,53 @@ impl Distro for FreeBSD {
             .into()
     }
 }
+
+const DRAGONFLYBSD_MIRROR: &str = "https://mirror-master.dragonflybsd.org/iso-images/";
+
+pub struct DragonFlyBSD;
+impl Distro for DragonFlyBSD {
+    const NAME: &'static str = "dragonflybsd";
+    const PRETTY_NAME: &'static str = "DragonFlyBSD";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.dragonflybsd.org/");
+    const DESCRIPTION: Option<&'static str> =
+        Some("Provides an opportunity for the BSD base to grow in an entirely different direction from the one taken in the FreeBSD, NetBSD, and OpenBSD series.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let mirror_html = capture_page(DRAGONFLYBSD_MIRROR).await?;
+        let iso_regex = Regex::new(r#"href="(dfly-x86_64-([0-9.]+)_REL.iso.bz2)""#).unwrap();
+        let mut checksums = ChecksumSeparation::Md5Regex
+            .build(&(DRAGONFLYBSD_MIRROR.to_string() + "md5.txt"))
+            .await;
+
+        let mut releases = iso_regex.captures_iter(&mirror_html).collect::<Vec<_>>();
+        // Remove duplicate versions, ignoring patch releases
+        releases.dedup_by(|a, b| {
+            if let (Ok(a), Ok(b)) = (
+                a[2].split('.').take(2).collect::<String>().parse::<u32>(),
+                b[2].split('.').take(2).collect::<String>().parse::<u32>(),
+            ) {
+                a == b
+            } else {
+                true
+            }
+        });
+
+        releases
+            .into_iter()
+            .take(4)
+            .map(|c| {
+                let iso = &c[1];
+                let release = c[2].to_string();
+                let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
+                let url = DRAGONFLYBSD_MIRROR.to_string() + iso;
+
+                Config {
+                    guest_os: GuestOS::DragonFlyBSD,
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Bz2), None))]),
+                    release: Some(release),
+                    ..Default::default()
+                }
+            })
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}

@@ -1557,7 +1557,7 @@ dependencies = [
 [[package]]
 name = "quickemu-rs"
 version = "0.7.1"
-source = "git+https://github.com/lj3954/quickemu-rs.git#22e9cbb4d34d9786c11d9a97f3b7ec9366a5dba4"
+source = "git+https://github.com/lj3954/quickemu-rs.git#412e6eebac941bac580b7a87040142480c363adf"
 dependencies = [
  "anyhow",
  "clap",
@@ -1579,7 +1579,7 @@ dependencies = [
 [[package]]
 name = "quickget-rs"
 version = "0.7.3"
-source = "git+https://github.com/lj3954/quickemu-rs.git#22e9cbb4d34d9786c11d9a97f3b7ec9366a5dba4"
+source = "git+https://github.com/lj3954/quickemu-rs.git#412e6eebac941bac580b7a87040142480c363adf"
 dependencies = [
  "anyhow",
  "clap",
