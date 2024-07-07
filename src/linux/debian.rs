@@ -266,3 +266,58 @@ impl Distro for Debian {
             .into()
     }
 }
+
+const DEVUAN_MIRROR: &str = "https://files.devuan.org/";
+
+pub struct Devuan;
+impl Distro for Devuan {
+    const NAME: &'static str = "devuan";
+    const PRETTY_NAME: &'static str = "Devuan";
+    const HOMEPAGE: Option<&'static str> = Some("https://devuan.org/");
+    const DESCRIPTION: Option<&'static str> =
+        Some("Fork of Debian without systemd that allows users to reclaim control over their system by avoiding unnecessary entanglements and ensuring Init Freedom.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let release_html = capture_page(DEVUAN_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="(devuan_[a-zA-Z]+/)""#).unwrap();
+        let iso_regex = Arc::new(Regex::new(r#"href="(devuan_[a-zA-Z]+_([0-9.]+)_amd64_desktop-live.iso)""#).unwrap());
+        let checksum_url_regex = Arc::new(Regex::new(r#"href="(SHA[^.]+.txt)""#).unwrap());
+
+        let futures = release_regex.captures_iter(&release_html).map(|c| {
+            let mirror = DEVUAN_MIRROR.to_string() + &c[1] + "desktop-live/";
+            let iso_regex = iso_regex.clone();
+            let checksum_url_regex = checksum_url_regex.clone();
+
+            async move {
+                let page_data = capture_page(&mirror).await?;
+                let mut checksums = match checksum_url_regex.captures(&page_data) {
+                    Some(c) => ChecksumSeparation::Whitespace.build(&(mirror.to_string() + &c[1])).await,
+                    None => None,
+                };
+
+                Some(
+                    iso_regex
+                        .captures_iter(&page_data)
+                        .map(|c| {
+                            let release = c[2].to_string();
+                            let iso = &c[1];
+                            let url = mirror.clone() + iso;
+                            let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
+                            Config {
+                                release: Some(release),
+                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                ..Default::default()
+                            }
+                        })
+                        .collect::<Vec<Config>>(),
+                )
+            }
+        });
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
