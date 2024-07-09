@@ -107,3 +107,15 @@ pub struct GithubAsset {
     pub name: String,
     pub browser_download_url: String,
 }
+
+#[macro_export]
+macro_rules! spawn_distros {
+    ($( $distro:ty ),* ) => {{
+        let mut handles = Vec::new();
+        $(
+            let handle = spawn(<$distro>::to_os());
+            handles.push(handle);
+        )*
+        handles
+    }};
+}

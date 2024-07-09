@@ -15,11 +15,11 @@ pub trait Distro {
 
 pub trait ToOS {
     #![allow(dead_code)]
-    async fn to_os(&self) -> Option<OS>;
+    async fn to_os() -> Option<OS>;
 }
 
 impl<T: Distro + Send> ToOS for T {
-    async fn to_os(&self) -> Option<OS> {
+    async fn to_os() -> Option<OS> {
         // Any entry containing a URL which isn't reachable needs to be removed
         let Some(releases) = Self::generate_configs().await else {
             log::error!("Failed to generate configs for {}", Self::PRETTY_NAME);
