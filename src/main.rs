@@ -48,6 +48,7 @@ async fn main() {
         spawn(linux::Debian.to_os()),
         spawn(linux::Devuan.to_os()),
         spawn(bsd::DragonFlyBSD.to_os()),
+        spawn(linux::EasyOS.to_os()),
     ];
 
     let distros = futures::future::join_all(futures)
