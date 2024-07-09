@@ -3,6 +3,8 @@ use crate::{
     utils::capture_page,
 };
 use once_cell::sync::Lazy;
+use quickemu::config::Arch;
+use quickget::data_structures::ArchiveFormat;
 use regex::Regex;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -147,34 +149,60 @@ impl Distro for UbuntuKylin {
 }
 
 async fn get_ubuntu_releases(variant: UbuntuVariant) -> Option<Vec<Config>> {
-    let futures = UBUNTU_RELEASES.iter().map(|release| {
-        let url = match (release.as_str(), &variant) {
-            ("daily-live", _) => format!("https://cdimage.ubuntu.com/{}/{release}/current/", variant.as_ref()),
-            (_, UbuntuVariant::Ubuntu | UbuntuVariant::UbuntuServer) => format!("https://releases.ubuntu.com/{release}/"),
-            _ => format!("https://cdimage.ubuntu.com/{}/releases/{release}/release/", variant.as_ref()),
-        };
+    let futures = UBUNTU_RELEASES.iter().flat_map(|release| {
+        variant
+            .supported_architectures()
+            .into_iter()
+            .map(move |arch| {
+                let arch_text = match arch {
+                    Arch::x86_64 => "amd64.iso",
+                    Arch::aarch64 => "arm64.iso",
+                    Arch::riscv64 => "riscv64.img.gz",
+                };
+                let mut release = release.clone();
+                let url = match (release.as_str(), &variant, &arch) {
+                    ("daily-live", ..) => format!("https://cdimage.ubuntu.com/{}/{release}/current/", variant.as_ref()),
+                    ("22.04", UbuntuVariant::Ubuntu, Arch::aarch64) => {
+                        release += "-daily";
+                        "https://cdimage.ubuntu.com/jammy/daily-live/current/".into()
+                    }
+                    (_, UbuntuVariant::Ubuntu | UbuntuVariant::UbuntuServer, Arch::x86_64) => format!("https://releases.ubuntu.com/{release}/"),
+                    (_, UbuntuVariant::UbuntuServer, _) => format!("https://cdimage.ubuntu.com/releases/{release}/release/"),
+                    _ => format!("https://cdimage.ubuntu.com/{}/releases/{release}/release/", variant.as_ref()),
+                };
 
-        let sku = match variant {
-            UbuntuVariant::UbuntuServer => "live-server",
-            UbuntuVariant::UbuntuStudio => "dvd",
-            _ => "desktop",
-        };
-        async move {
-            let text = match capture_page(&format!("{}SHA256SUMS", url)).await {
-                Some(text) => text,
-                None => capture_page(&format!("{}MD5SUMS", url)).await?,
-            };
+                let sku = match variant {
+                    UbuntuVariant::UbuntuServer => "live-server",
+                    UbuntuVariant::UbuntuStudio => "dvd",
+                    _ => "desktop",
+                };
+                async move {
+                    let text = match capture_page(&format!("{}SHA256SUMS", url)).await {
+                        Some(text) => text,
+                        None => capture_page(&format!("{}MD5SUMS", url)).await?,
+                    };
 
-            let line = text.lines().find(|l| l.contains("amd64") && l.contains(sku))?;
-            let hash = line.split_whitespace().next();
-            let iso = format!("{url}{}", line.split('*').nth(1)?);
+                    let line = text.lines().find(|l| l.contains(arch_text) && l.contains(sku))?;
+                    let checksum = line.split_whitespace().next().map(ToString::to_string);
+                    let iso = format!("{url}{}", line.split('*').nth(1)?);
 
-            Some(Config {
-                iso: Some(vec![Source::Web(WebSource::new(iso, hash.map(Into::into), None, None))]),
-                release: Some(release.to_string()),
-                ..Default::default()
+                    Some(match arch {
+                        Arch::riscv64 => Config {
+                            img: Some(vec![Source::Web(WebSource::new(iso, checksum, Some(ArchiveFormat::Gz), None))]),
+                            release: Some(release),
+                            arch,
+                            ..Default::default()
+                        },
+                        _ => Config {
+                            iso: Some(vec![Source::Web(WebSource::new(iso, checksum, None, None))]),
+                            release: Some(release),
+                            arch,
+                            ..Default::default()
+                        },
+                    })
+                }
             })
-        }
+            .collect::<Vec<_>>()
     });
 
     futures::future::join_all(futures)
@@ -205,6 +233,7 @@ static UBUNTU_RELEASES: Lazy<Vec<String>> = Lazy::new(|| {
     releases
 });
 
+#[derive(Copy, Clone)]
 enum UbuntuVariant {
     Ubuntu,
     UbuntuServer,
@@ -235,6 +264,16 @@ impl AsRef<str> for UbuntuVariant {
             UbuntuVariant::Edubuntu => "edubuntu",
             UbuntuVariant::Xubuntu => "xubuntu",
             UbuntuVariant::UbuntuCinnamon => "ubuntucinnamon",
+        }
+    }
+}
+
+impl UbuntuVariant {
+    fn supported_architectures(&self) -> Vec<Arch> {
+        match self {
+            UbuntuVariant::UbuntuServer => vec![Arch::x86_64, Arch::aarch64, Arch::riscv64],
+            UbuntuVariant::Ubuntu => vec![Arch::x86_64, Arch::aarch64],
+            _ => vec![Arch::x86_64],
         }
     }
 }
