@@ -1,8 +1,9 @@
 use crate::{
-    store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
+    store_data::{ChecksumSeparation, Config, Disk, Distro, Source, WebSource},
     utils::{capture_page, GatherData, GithubAPI},
 };
-use quickemu::config::Arch;
+use quickemu::config::{Arch, DiskFormat};
+use quickget::data_structures::ArchiveFormat;
 use regex::Regex;
 use std::{collections::HashMap, sync::Arc};
 
@@ -316,6 +317,121 @@ impl Distro for Devuan {
             .await
             .into_iter()
             .flatten()
+            .flatten()
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
+
+const EASYOS_MIRROR: &str = "https://distro.ibiblio.org/easyos/amd64/releases/";
+
+pub struct EasyOS;
+impl Distro for EasyOS {
+    const NAME: &'static str = "easyos";
+    const PRETTY_NAME: &'static str = "EasyOS";
+    const HOMEPAGE: Option<&'static str> = Some("https://easyos.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Experimental distribution designed from scratch to support containers.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let release_html = capture_page(EASYOS_MIRROR).await?;
+        let release_name_regex = Regex::new(r#"href="([a-z]+/)""#).unwrap();
+        let subdirectory_regex = Arc::new(Regex::new(r#"href="([0-9]{4}/)""#).unwrap());
+        let release_regex = Arc::new(Regex::new(r#"href="([0-9](?:\.[0-9]+)+)/""#).unwrap());
+        let img_regex = Arc::new(Regex::new(r#"href="(easy-[0-9.]+-amd64.img(.gz)?)""#).unwrap());
+
+        let release_futures = release_name_regex.captures_iter(&release_html).map(|c| {
+            let mirror = EASYOS_MIRROR.to_string() + &c[1];
+            let subdirectory_regex = subdirectory_regex.clone();
+            let release_regex = release_regex.clone();
+
+            async move {
+                let subdirectory_html = capture_page(&mirror).await?;
+                let futures = subdirectory_regex.captures_iter(&subdirectory_html).map(|c| {
+                    let mirror = mirror.clone() + &c[1];
+                    let release_regex = release_regex.clone();
+                    async move {
+                        let releases_html = capture_page(&mirror).await?;
+                        Some(
+                            release_regex
+                                .captures_iter(&releases_html)
+                                .map(|c| {
+                                    println!("{mirror}{}", &c[1]);
+                                    let release = c[1].to_string();
+                                    let mirror = mirror.clone() + &release + "/";
+                                    (release, mirror)
+                                })
+                                .collect::<Vec<_>>(),
+                        )
+                    }
+                });
+
+                Some(
+                    futures::future::join_all(futures)
+                        .await
+                        .into_iter()
+                        .flatten()
+                        .collect::<Vec<_>>(),
+                )
+            }
+        });
+        let mut releases = futures::future::join_all(release_futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .flatten()
+            .collect::<Vec<_>>();
+
+        releases.sort_by(|(a, _), (b, _)| {
+            if let (Ok(a), Ok(b)) = (
+                a.split('.').take(2).collect::<Vec<&str>>().join(".").parse::<f64>(),
+                b.split('.').take(2).collect::<Vec<&str>>().join(".").parse::<f64>(),
+            ) {
+                a.partial_cmp(&b).unwrap()
+            } else {
+                std::cmp::Ordering::Equal
+            }
+        });
+        releases.reverse();
+
+        releases.dedup_by(|(a, _), (b, _)| {
+            if let (Ok(a), Ok(b)) = (
+                a.split('.').take(2).collect::<String>().parse::<u32>(),
+                b.split('.').take(2).collect::<String>().parse::<u32>(),
+            ) {
+                a == b
+            } else {
+                true
+            }
+        });
+        println!("{:?}", releases);
+
+        let futures = releases.into_iter().take(5).map(|(release, mirror)| {
+            let img_regex = img_regex.clone();
+
+            async move {
+                let page = capture_page(&mirror).await?;
+                let checksum_url = mirror.clone() + "md5sum.txt";
+                let checksum = capture_page(&checksum_url)
+                    .await
+                    .and_then(|cs| cs.split_whitespace().next().map(ToString::to_string));
+
+                let img_capture = img_regex.captures(&page)?;
+                let url = mirror + &img_capture[1];
+                let archive_format = if img_capture.get(2).is_some() { Some(ArchiveFormat::Gz) } else { None };
+                Some(Config {
+                    release: Some(release),
+                    disk_images: Some(vec![Disk {
+                        source: Source::Web(WebSource::new(url, checksum, archive_format, None)),
+                        format: DiskFormat::Raw,
+                        ..Default::default()
+                    }]),
+                    ..Default::default()
+                })
+            }
+        });
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
             .flatten()
             .collect::<Vec<Config>>()
             .into()
