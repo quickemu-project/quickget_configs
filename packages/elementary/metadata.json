@@ -1,0 +1,13 @@
+[
+    {
+        "os_name": "elementary",
+        "images": [
+            {
+                "release": "8",
+                "architectures": ["x86_64"],
+                "env": [ [ "RELEASE", "8-daily" ] ],
+                "filename": "elementary-8-daily.iso"
+            }
+        ]
+    }
+]

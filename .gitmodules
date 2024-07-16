@@ -1,0 +1,3 @@
+[submodule "packages/elementary/os"]
+	path = packages/elementary/os
+	url = git@github.com:elementary/os.git
