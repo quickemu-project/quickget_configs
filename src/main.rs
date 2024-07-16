@@ -1,4 +1,5 @@
 mod bsd;
+mod container_images;
 mod linux;
 mod store_data;
 mod utils;
@@ -51,17 +52,15 @@ async fn main() {
         linux::EasyOS
     );
 
-    let distros = futures::future::join_all(futures)
+    let mut distros = futures::future::join_all(futures)
         .await
         .into_iter()
         .flatten()
         .flatten()
-        .collect::<Vec<OS>>()
-        .distro_sort();
+        .collect::<Vec<OS>>();
 
-    if let Ok(output) = serde_json::to_string_pretty(&distros) {
-        println!("{}", output);
-    }
+    container_images::add_container_images(&mut distros).await;
+    distros.distro_sort();
 
     let output = serde_json::to_string(&distros).unwrap();
 
@@ -71,11 +70,11 @@ async fn main() {
 }
 
 trait DistroSort {
-    fn distro_sort(self) -> Self;
+    fn distro_sort(&mut self);
 }
 
 impl DistroSort for Vec<OS> {
-    fn distro_sort(mut self) -> Self {
+    fn distro_sort(&mut self) {
         self.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         self.iter_mut().for_each(|d| {
             d.releases.sort_unstable_by(|a, b| {
@@ -96,7 +95,6 @@ impl DistroSort for Vec<OS> {
                 b.release.cmp(&a.release).then(a.edition.cmp(&b.edition))
             })
         });
-        self
     }
 }
 
