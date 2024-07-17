@@ -19,31 +19,30 @@ impl Distro for Alma {
         let releases_regex = Regex::new(r#"<a href="([0-9]+)/""#).unwrap();
         let iso_regex = Arc::new(Regex::new(r#"<a href="(AlmaLinux-[0-9]+-latest-(?:x86_64|aarch64)-([^-]+).iso)">"#).unwrap());
 
-        let futures = releases_regex.captures_iter(&releases).flat_map(|r| {
-            let release = r[1].to_string();
+        let futures = releases_regex.captures_iter(&releases).flat_map(|c| {
+            let release = c[1].to_string();
             [Arch::x86_64, Arch::aarch64]
                 .iter()
                 .map(|arch| {
-                    let release = release.clone();
+                    let release = release.to_string();
                     let iso_regex = iso_regex.clone();
                     let mirror = format!("{ALMA_MIRROR}{release}/isos/{arch}/");
 
                     async move {
                         let page = capture_page(&mirror).await?;
-                        let checksums = ChecksumSeparation::Sha256Regex.build(&format!("{mirror}CHECKSUM")).await;
+                        let mut checksums = ChecksumSeparation::Sha256Regex.build(&format!("{mirror}CHECKSUM")).await;
 
                         Some(
                             iso_regex
                                 .captures_iter(&page)
-                                .filter(|c| !c.get(0).unwrap().as_str().ends_with(".manifest"))
-                                .map(|c| {
-                                    let iso = c[1].to_string();
-                                    let edition = c[2].to_string();
+                                .map(|c| c.extract())
+                                .filter(|(capture, _)| !capture.ends_with(".manifest"))
+                                .map(|(_, [iso, edition])| {
                                     let url = format!("{mirror}{iso}");
-                                    let checksum = checksums.as_ref().and_then(|cs| cs.get(&iso)).cloned();
+                                    let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                                     Config {
                                         release: Some(release.to_string()),
-                                        edition: Some(edition),
+                                        edition: Some(edition.to_string()),
                                         arch: arch.clone(),
                                         iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                         ..Default::default()
@@ -82,30 +81,27 @@ impl Distro for Bazzite {
 
         let futures = workflow_capture_regex
             .captures_iter(&workflow)
-            .map(|c| {
-                let edition_capture = &c[2];
-
-                let edition = if edition_capture.is_empty() {
-                    "plasma".to_string()
-                } else if edition_capture.len() > 4 {
-                    edition_capture.to_string()
-                } else {
-                    format!("{edition_capture}-plasma")
+            .map(|c| c.extract())
+            .map(|(_, [iso, edition_capture])| {
+                let edition = match edition_capture.len() {
+                    0 => "plasma".to_string(),
+                    1..=4 => format!("{edition_capture}-plasma"),
+                    _ => edition_capture.to_string(),
                 };
+                let url = format!("{BAZZITE_MIRROR}{iso}-stable.iso");
 
-                let iso = format!("{BAZZITE_MIRROR}{}-stable.iso", &c[1]);
                 async move {
                     if BAZZITE_EXCLUDE.iter().any(|e| edition.contains(e)) {
                         return None;
                     }
-                    let checksum_url = iso.clone() + "-CHECKSUM";
+                    let checksum_url = url.clone() + "-CHECKSUM";
                     let checksum = capture_page(&checksum_url)
                         .await
                         .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
                     Some(Config {
                         release: Some("latest".to_string()),
                         edition: Some(edition),
-                        iso: Some(vec![Source::Web(WebSource::new(iso, checksum, None, None))]),
+                        iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                         ..Default::default()
                     })
                 }
@@ -144,7 +140,7 @@ impl Distro for CentOSStream {
                 [Arch::x86_64, Arch::aarch64]
                     .iter()
                     .map(|arch| {
-                        let release = release.clone();
+                        let release = release.to_string();
                         let iso_regex = iso_regex.clone();
                         let mirror_addition = format!("{release}-stream/BaseOS/{arch}/iso/");
                         let mirror = format!("{CENTOS_MIRROR}{mirror_addition}");
@@ -157,14 +153,13 @@ impl Distro for CentOSStream {
                             Some(
                                 iso_regex
                                     .captures_iter(&page)
-                                    .map(|c| {
-                                        let iso = &c[1];
+                                    .map(|c| c.extract())
+                                    .map(|(_, [iso, edition])| {
                                         let url = format!("{final_mirror}{iso}{CENTOS_URL_SUFFIX}");
                                         let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
-                                        let edition = c[2].to_string();
                                         Config {
                                             release: Some(release.clone()),
-                                            edition: Some(edition),
+                                            edition: Some(edition.to_string()),
                                             arch: arch.clone(),
                                             iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                             ..Default::default()
