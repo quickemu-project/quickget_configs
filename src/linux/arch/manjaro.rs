@@ -22,19 +22,17 @@ impl Distro for BigLinux {
         data.sort_unstable_by_key(|c| c[2].to_string());
         data.reverse();
 
-        let futures = data.into_iter().map(|c| {
-            let iso = format!("{BIGLINUX_MIRROR}{}", &c[1]);
-            let checksum_url = iso.clone() + ".md5";
-            let release = c[2].to_string();
-            let edition = c[3].to_string();
+        let futures = data.into_iter().map(|c| c.extract()).map(|(_, [iso, release, edition])| {
+            let url = BIGLINUX_MIRROR.to_string() + &iso;
+            let checksum_url = url.clone() + ".md5";
             async move {
                 let checksum = capture_page(&checksum_url)
                     .await
                     .and_then(|s| s.split_whitespace().next().map(ToString::to_string));
                 Config {
-                    release: Some(release),
-                    edition: Some(edition),
-                    iso: Some(vec![Source::Web(WebSource::new(iso, checksum, None, None))]),
+                    release: Some(release.to_string()),
+                    edition: Some(edition.to_string()),
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                     ..Default::default()
                 }
             }

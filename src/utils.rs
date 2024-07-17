@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use once_cell::sync::Lazy;
+use quickemu::config::Arch;
 use reqwest::{StatusCode, Url};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
@@ -63,6 +64,15 @@ pub async fn all_valid(urls: Vec<String>) -> bool {
         Some(successful)
     });
     futures::future::join_all(futures).await.into_iter().all(|r| r.unwrap_or(true))
+}
+
+pub fn arch_from_str(arch: &str) -> Option<Arch> {
+    match arch {
+        "x86_64" | "amd64" => Some(Arch::x86_64),
+        "aarch64" | "arm64" => Some(Arch::aarch64),
+        "riscv64" | "riscv" => Some(Arch::riscv64),
+        _ => None,
+    }
 }
 
 struct ReqwestClient {

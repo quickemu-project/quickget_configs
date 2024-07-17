@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     store_data::{ArchiveFormat, ChecksumSeparation, Config, Distro, Source, WebSource},
-    utils::capture_page,
+    utils::{arch_from_str, capture_page},
 };
 use quickemu::config::Arch;
 use regex::Regex;
@@ -50,21 +50,20 @@ impl Distro for NixOS {
                     &mut page
                         .into_iter()
                         .map(|page| {
-                            let capture = iso_regex.captures(&page).unwrap();
                             let release = release.clone();
-                            let name = capture.get(0).map(|n| n.as_str().to_string());
-                            let edition = capture.get(1).map(|e| e.as_str().to_string());
-                            let arch: Option<Arch> = capture.get(2).map(|a| a.as_str().to_string()).try_into().ok();
+                            let (name, [edition, arch]) = iso_regex.captures(&page).unwrap().extract();
+                            let edition = edition.to_string();
+                            let arch = arch_from_str(arch);
+                            let url = format!("{NIX_DOWNLOAD_URL}/nixos-{release}/{name}");
                             async move {
-                                let iso = format!("{NIX_DOWNLOAD_URL}/nixos-{release}/{}", name?);
-                                let hash = capture_page(&format!("{iso}.sha256"))
+                                let hash = capture_page(&format!("{url}.sha256"))
                                     .await
                                     .map(|h| h.split_whitespace().next().unwrap().to_string());
                                 Some(Config {
                                     release: Some(release),
-                                    edition: Some(edition?),
+                                    edition: Some(edition),
                                     arch: arch?,
-                                    iso: Some(vec![Source::Web(WebSource::new(iso, hash, None, None))]),
+                                    iso: Some(vec![Source::Web(WebSource::new(url, hash, None, None))]),
                                     ..Default::default()
                                 })
                             }
@@ -117,14 +116,12 @@ impl Distro for Alpine {
 
                     async move {
                         let page = capture_page(&mirror).await?;
-                        let captures = iso_regex.captures(&page)?;
-                        let iso = captures.get(1).unwrap().as_str();
-                        let iso = format!("{ALPINE_MIRROR}{release}/releases/{arch}/{iso}");
-                        let checksum = captures[2].to_string();
+                        let (_, [iso, checksum]) = iso_regex.captures(&page)?.extract();
+                        let url = format!("{ALPINE_MIRROR}{release}/releases/{arch}/{iso}");
                         Some(Config {
                             release: Some(release.to_string()),
                             arch: arch.clone(),
-                            iso: Some(vec![Source::Web(WebSource::new(iso, Some(checksum), None, None))]),
+                            iso: Some(vec![Source::Web(WebSource::new(url, Some(checksum.into()), None, None))]),
                             ..Default::default()
                         })
                     }
@@ -227,20 +224,14 @@ impl Distro for ChimeraLinux {
                 Some(
                     iso_regex
                         .captures_iter(&page)
-                        .map(|c| {
-                            let iso = &c[1];
-                            let edition = c[3].to_string();
-                            let arch = match &c[2] {
-                                "x86_64" => Arch::x86_64,
-                                "aarch64" => Arch::aarch64,
-                                "riscv64" => Arch::riscv64,
-                                _ => panic!("Chimera Linux: Regex allowed an invalid architecture through"),
-                            };
+                        .map(|c| c.extract())
+                        .map(|(_, [iso, arch, edition])| {
+                            let arch = arch_from_str(arch).expect("Chimera Linux: Regex allowed an invalid architecture through");
                             let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                             let url = format!("{url}{iso}");
                             Config {
                                 release: Some(release.clone()),
-                                edition: Some(edition),
+                                edition: Some(edition.to_string()),
                                 arch,
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                 ..Default::default()
