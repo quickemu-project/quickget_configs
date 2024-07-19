@@ -1,0 +1,1151 @@
+{
+  "privileged": false,
+  "os_data": [
+    {
+      "os_name": "windows",
+      "guest_os": "windows_server",
+      "images": [
+        {
+          "release": "retail",
+          "edition": "Arabic",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Arabic.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Arabic",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Arabic.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Arabic",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Arabic.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Arabic",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Arabic.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Arabic",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Arabic.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Brazilian Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Brazilian_Portuguese.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Brazilian Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Brazilian_Portuguese.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Brazilian Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Brazilian_Portuguese.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Brazilian Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Brazilian_Portuguese.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Brazilian Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Brazilian_Portuguese.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Bulgarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Bulgarian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Bulgarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Bulgarian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Bulgarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Bulgarian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Bulgarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Bulgarian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Bulgarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Bulgarian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Chinese (Simplified)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Chinese_Simplified.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Chinese (Simplified)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Chinese_Simplified.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Chinese (Simplified)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Chinese_Simplified.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Chinese (Simplified)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Chinese_Simplified.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Chinese (Simplified)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Chinese_Simplified.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Chinese (Traditional)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Chinese_Traditional.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Chinese (Traditional)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Chinese_Traditional.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Chinese (Traditional)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Chinese_Traditional.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Chinese (Traditional)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Chinese_Traditional.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Chinese (Traditional)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Chinese_Traditional.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Croatian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Croatian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Croatian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Croatian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Croatian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Croatian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Croatian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Croatian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Croatian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Croatian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Czech",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Czech.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Czech",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Czech.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Czech",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Czech.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Czech",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Czech.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Czech",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Czech.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Danish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Danish.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Danish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Danish.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Danish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Danish.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Danish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Danish.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Danish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Danish.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Dutch",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Dutch.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Dutch",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Dutch.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Dutch",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Dutch.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Dutch",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Dutch.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Dutch",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Dutch.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "English (United States)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-English_United_States.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "English (United States)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-English_United_States.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "English (United States)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-English_United_States.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "English (United States)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-English_United_States.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "English (United States)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-English_United_States.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "English International",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-English_International.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "English International",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-English_International.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "English International",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-English_International.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "English International",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-English_International.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "English International",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-English_International.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Estonian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Estonian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Estonian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Estonian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Estonian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Estonian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Estonian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Estonian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Estonian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Estonian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Finnish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Finnish.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Finnish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Finnish.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Finnish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Finnish.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Finnish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Finnish.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Finnish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Finnish.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "French",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-French.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "French",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-French.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "French",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-French.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "French",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-French.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "French",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-French.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "French Canadian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-French_Canadian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "French Canadian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-French_Canadian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "French Canadian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-French_Canadian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "French Canadian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-French_Canadian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "French Canadian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-French_Canadian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "German",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-German.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "German",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-German.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "German",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-German.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "German",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-German.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "German",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-German.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Greek",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Greek.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Greek",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Greek.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Greek",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Greek.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Greek",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Greek.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Greek",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Greek.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Hebrew",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Hebrew.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Hebrew",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Hebrew.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Hebrew",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Hebrew.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Hebrew",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Hebrew.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Hebrew",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Hebrew.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Hungarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Hungarian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Hungarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Hungarian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Hungarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Hungarian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Hungarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Hungarian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Hungarian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Hungarian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Italian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Italian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Italian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Italian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Italian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Italian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Italian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Italian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Italian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Italian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Japanese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Japanese.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Japanese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Japanese.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Japanese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Japanese.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Japanese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Japanese.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Japanese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Japanese.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Korean",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Korean.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Korean",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Korean.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Korean",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Korean.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Korean",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Korean.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Korean",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Korean.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Latvian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Latvian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Latvian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Latvian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Latvian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Latvian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Latvian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Latvian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Latvian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Latvian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Lithuanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Lithuanian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Lithuanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Lithuanian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Lithuanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Lithuanian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Lithuanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Lithuanian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Lithuanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Lithuanian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Norwegian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Norwegian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Norwegian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Norwegian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Norwegian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Norwegian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Norwegian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Norwegian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Norwegian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Norwegian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Polish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Polish.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Polish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Polish.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Polish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Polish.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Polish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Polish.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Polish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Polish.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Portuguese.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Portuguese.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Portuguese.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Portuguese.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Portuguese",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Portuguese.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Romanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Romanian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Romanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Romanian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Romanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Romanian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Romanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Romanian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Romanian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Romanian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Russian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Russian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Russian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Russian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Russian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Russian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Russian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Russian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Russian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Russian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Serbian Latin",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Serbian_Latin.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Serbian Latin",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Serbian_Latin.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Serbian Latin",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Serbian_Latin.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Serbian Latin",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Serbian_Latin.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Serbian Latin",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Serbian_Latin.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Slovak",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Slovak.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Slovak",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Slovak.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Slovak",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Slovak.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Slovak",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Slovak.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Slovak",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Slovak.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Slovenian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Slovenian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Slovenian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Slovenian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Slovenian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Slovenian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Slovenian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Slovenian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Slovenian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Slovenian.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Spanish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Spanish.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Spanish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Spanish.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Spanish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Spanish.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Spanish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Spanish.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Spanish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Spanish.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Spanish (Mexico)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Spanish_Mexico.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Spanish (Mexico)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Spanish_Mexico.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Spanish (Mexico)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Spanish_Mexico.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Spanish (Mexico)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Spanish_Mexico.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Spanish (Mexico)",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Spanish_Mexico.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Swedish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Swedish.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Swedish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Swedish.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Swedish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Swedish.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Swedish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Swedish.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Swedish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Swedish.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Thai",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Thai.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Thai",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Thai.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Thai",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Thai.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Thai",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Thai.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Thai",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Thai.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Turkish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Turkish.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Turkish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Turkish.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Turkish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Turkish.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Turkish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Turkish.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Turkish",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Turkish.iso"
+        },
+        {
+          "release": "retail",
+          "edition": "Ukrainian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-retail-Ukrainian.iso"
+        },
+        {
+          "release": "release_preview",
+          "edition": "Ukrainian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-release_preview-Ukrainian.iso"
+        },
+        {
+          "release": "beta",
+          "edition": "Ukrainian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-beta-Ukrainian.iso"
+        },
+        {
+          "release": "dev",
+          "edition": "Ukrainian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-dev-Ukrainian.iso"
+        },
+        {
+          "release": "canary",
+          "edition": "Ukrainian",
+          "architectures": ["x86_64", "aarch64"],
+          "filename": "windows-canary-Ukrainian.iso"
+        }
+      ]
+    }
+  ]
+}
