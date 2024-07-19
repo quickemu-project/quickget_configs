@@ -15,20 +15,18 @@ pub trait Distro {
 
 pub trait ToOS {
     #![allow(dead_code)]
-    async fn to_os() -> Option<OS>;
+    async fn to_os() -> OS;
 }
 
 impl<T: Distro + Send> ToOS for T {
-    async fn to_os() -> Option<OS> {
+    async fn to_os() -> OS {
         // Any entry containing a URL which isn't reachable needs to be removed
-        let Some(releases) = Self::generate_configs().await else {
+        let releases = Self::generate_configs().await;
+        if releases.is_none() {
             log::error!("Failed to generate configs for {}", Self::PRETTY_NAME);
-            return None;
         };
-        if releases.is_empty() {
-            log::error!("No releases found for {}", Self::PRETTY_NAME);
-            return None;
-        }
+        let releases = releases.unwrap_or_default();
+
         let futures = releases.iter().map(|r| {
             let urls = [
                 filter_web_sources(r.iso.as_deref()),
@@ -60,13 +58,13 @@ impl<T: Distro + Send> ToOS for T {
             })
             .collect::<Vec<Config>>();
 
-        Some(OS {
+        OS {
             name: Self::NAME.into(),
             pretty_name: Self::PRETTY_NAME.into(),
             homepage: Self::HOMEPAGE.map(Into::into),
             description: Self::DESCRIPTION.map(Into::into),
             releases,
-        })
+        }
     }
 }
 

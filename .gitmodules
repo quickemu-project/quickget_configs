@@ -1,3 +1,6 @@
 [submodule "packages/elementary/os"]
 	path = packages/elementary/os
 	url = git@github.com:elementary/os.git
+[submodule "packages/windows/uupdump_converter"]
+	path = packages/windows/uupdump_converter
+	url = https://git.uupdump.net/uup-dump/converter

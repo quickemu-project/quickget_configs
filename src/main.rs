@@ -3,6 +3,7 @@ mod container_images;
 mod linux;
 mod store_data;
 mod utils;
+mod windows;
 
 use std::{fs::File, io::Write};
 
@@ -56,7 +57,6 @@ async fn main() {
         .await
         .into_iter()
         .flatten()
-        .flatten()
         .collect::<Vec<OS>>();
 
     container_images::add_container_images(&mut distros).await;
@@ -76,6 +76,7 @@ trait DistroSort {
 impl DistroSort for Vec<OS> {
     fn distro_sort(&mut self) {
         self.sort_unstable_by(|a, b| a.name.cmp(&b.name));
+        self.retain(|d| !d.releases.is_empty());
         self.iter_mut().for_each(|d| {
             d.releases.sort_unstable_by(|a, b| {
                 if let (Some(release_a), Some(release_b)) = (&a.release, &b.release) {
