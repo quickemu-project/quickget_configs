@@ -1,13 +1,17 @@
-[
+{
+  "privileged": true,
+  "shared_dirs": ["/proc"],
+  "os_data": [
     {
-        "os_name": "elementary",
-        "images": [
-            {
-                "release": "8",
-                "architectures": ["x86_64"],
-                "env": [ [ "RELEASE", "8-daily" ] ],
-                "filename": "elementary-8-daily.iso"
-            }
-        ]
+      "os_name": "elementary",
+      "images": [
+        {
+          "release": "8",
+          "architectures": ["x86_64"],
+          "env": [["RELEASE", "8-daily"]],
+          "filename": "elementary-8-daily.iso"
+        }
+      ]
     }
-]
+  ]
+}
