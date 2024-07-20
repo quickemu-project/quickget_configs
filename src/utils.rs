@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use once_cell::sync::Lazy;
+use quickget::data_structures::ArchiveFormat;
 use reqwest::{StatusCode, Url};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
@@ -106,6 +107,27 @@ pub struct GithubAPIValue {
 pub struct GithubAsset {
     pub name: String,
     pub browser_download_url: String,
+}
+
+impl GatherData for FedoraRelease {
+    type Output = Vec<FedoraRelease>;
+    async fn gather_data(url: &str) -> Option<Self::Output> {
+        let data = capture_page(url).await?;
+        serde_json::from_str(&data).ok()
+    }
+}
+
+#[derive(Deserialize)]
+pub struct FedoraRelease {
+    #[serde(rename = "version")]
+    pub release: String,
+    pub arch: String,
+    pub link: String,
+    #[serde(rename = "subvariant")]
+    pub edition: String,
+    pub sha256: Option<String>,
+    // This is not contained within Fedora's data, we'll add it ourselves based on the file extension
+    pub archive_format: Option<ArchiveFormat>,
 }
 
 #[macro_export]

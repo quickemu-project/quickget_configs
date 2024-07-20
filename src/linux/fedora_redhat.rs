@@ -1,7 +1,9 @@
 use crate::{
     store_data::{Arch, ChecksumSeparation, Config, Distro, Source, WebSource},
-    utils::capture_page,
+    utils::{arch_from_str, capture_page, FedoraRelease, GatherData},
 };
+use quickemu::config::DiskFormat;
+use quickget::data_structures::{ArchiveFormat, Disk};
 use regex::Regex;
 use std::sync::Arc;
 
@@ -183,6 +185,68 @@ impl Distro for CentOSStream {
             .into_iter()
             .flatten()
             .flatten()
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
+
+const FEDORA_RELEASE_URL: &str = "https://fedoraproject.org/releases.json";
+const VALID_FEDORA_FILETYPES: [&str; 2] = ["raw.xz", "iso"];
+const BLACKLISTED_EDITIONS: [&str; 2] = ["Server", "Cloud_Base"];
+
+pub struct Fedora;
+impl Distro for Fedora {
+    const NAME: &'static str = "fedora";
+    const PRETTY_NAME: &'static str = "Fedora";
+    const HOMEPAGE: Option<&'static str> = Some("https://fedoraproject.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Innovative platform for hardware, clouds, and containers, built with love by you.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let mut releases = FedoraRelease::gather_data(FEDORA_RELEASE_URL).await?;
+        // Filter out unwanted filetypes and editions
+        releases.retain(|FedoraRelease { link, edition, .. }| VALID_FEDORA_FILETYPES.iter().any(|ext| link.ends_with(ext)) && !BLACKLISTED_EDITIONS.iter().any(|e| edition == e));
+
+        releases
+            .iter_mut()
+            .for_each(|FedoraRelease { link, edition, archive_format, .. }| {
+                if link.ends_with("raw.xz") {
+                    *edition += "_preinstalled";
+                    *archive_format = Some(ArchiveFormat::Xz);
+                }
+            });
+        releases.dedup_by(|a, b| a.release == b.release && a.edition == b.edition);
+
+        releases
+            .into_iter()
+            .filter_map(
+                |FedoraRelease {
+                     release,
+                     edition,
+                     arch,
+                     link,
+                     archive_format,
+                     sha256,
+                 }| {
+                    let is_disk_image = archive_format.is_some();
+                    let source = Source::Web(WebSource::new(link, sha256, archive_format, None));
+                    let arch = arch_from_str(&arch)?;
+                    let mut config = Config {
+                        release: Some(release),
+                        edition: Some(edition),
+                        arch,
+                        ..Default::default()
+                    };
+                    if is_disk_image {
+                        config.disk_images = Some(vec![Disk {
+                            source,
+                            format: DiskFormat::Raw,
+                            ..Default::default()
+                        }])
+                    } else {
+                        config.iso = Some(vec![source]);
+                    }
+                    Some(config)
+                },
+            )
             .collect::<Vec<Config>>()
             .into()
     }
