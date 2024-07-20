@@ -437,3 +437,62 @@ impl Distro for EasyOS {
             .into()
     }
 }
+
+const ENDLESS_DL_MIRROR: &str = "https://images-dl.endlessm.com/release/";
+const ENDLESS_DATA_MIRROR: &str = "https://mirror.leitecastro.com/endless/release/";
+
+pub struct EndlessOS;
+impl Distro for EndlessOS {
+    const NAME: &'static str = "endless";
+    const PRETTY_NAME: &'static str = "Endless OS";
+    const HOMEPAGE: Option<&'static str> = Some("https://endlessos.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Completely Free, User-Friendly Operating System Packed with Educational Tools, Games, and More.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let release_html = capture_page(ENDLESS_DATA_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="(\d+(?:.\d+){2})\/""#).unwrap();
+        let edition_regex = Arc::new(Regex::new(r#"href="([^./]+)"#).unwrap());
+        let iso_regex = Arc::new(Regex::new(r#"href="(eos-eos[\d.]+-amd64-amd64.[-\d]+.[^.]+.iso)""#).unwrap());
+
+        let futures = release_regex.captures_iter(&release_html).map(|c| {
+            let release = c[1].to_string();
+            let mirror = ENDLESS_DATA_MIRROR.to_string() + &release + "/eos-amd64-amd64/";
+            let edition_regex = edition_regex.clone();
+            let iso_regex = iso_regex.clone();
+            async move {
+                let edition_html = capture_page(&mirror).await?;
+                let futures = edition_regex.captures_iter(&edition_html).map(|c| {
+                    let edition = c[1].to_string();
+                    let mirror = mirror.clone() + &edition + "/";
+                    let iso_regex = iso_regex.clone();
+                    let release = release.clone();
+                    async move {
+                        let page = capture_page(&mirror).await?;
+                        let iso = &iso_regex.captures(&page)?[1];
+                        let url = format!("{ENDLESS_DL_MIRROR}{release}/eos-amd64-amd64/{edition}/{iso}");
+
+                        let checksum_url = url.clone() + ".sha256";
+                        let checksum = capture_page(&checksum_url)
+                            .await
+                            .and_then(|cs| cs.split_whitespace().next().map(ToString::to_string));
+                        Some(Config {
+                            release: Some(release),
+                            edition: Some(edition),
+                            iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                            ..Default::default()
+                        })
+                    }
+                });
+                Some(futures::future::join_all(futures).await)
+            }
+        });
+
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .flatten()
+            .collect::<Vec<_>>()
+            .into()
+    }
+}

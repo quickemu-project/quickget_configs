@@ -49,7 +49,8 @@ async fn main() {
         linux::Devuan,
         bsd::DragonFlyBSD,
         linux::EasyOS,
-        linux::EndeavourOS
+        linux::EndeavourOS,
+        linux::EndlessOS
     );
 
     let distros = futures::future::join_all(futures)
