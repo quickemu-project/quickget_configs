@@ -55,6 +55,8 @@ async fn main() {
         linux::Fedora,
         other::FreeDOS,
         linux::Garuda,
+        linux::Garuda,
+        linux::Gentoo,
     );
 
     let distros = futures::future::join_all(futures)
