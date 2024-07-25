@@ -132,7 +132,7 @@ pub struct FedoraRelease {
 
 #[macro_export]
 macro_rules! spawn_distros {
-    ($( $distro:ty ),* ) => {{
+    ($( $distro:ty ),* $(,)? ) => {{
         let mut handles = Vec::new();
         $(
             let handle = spawn(<$distro>::to_os());

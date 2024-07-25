@@ -51,7 +51,7 @@ async fn main() {
         linux::EasyOS,
         linux::EndeavourOS,
         linux::EndlessOS,
-        linux::Fedora
+        linux::Fedora,
     );
 
     let distros = futures::future::join_all(futures)
