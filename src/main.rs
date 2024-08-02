@@ -1,5 +1,6 @@
 mod bsd;
 mod linux;
+mod other;
 mod store_data;
 mod utils;
 
@@ -48,7 +49,11 @@ async fn main() {
         linux::Debian,
         linux::Devuan,
         bsd::DragonFlyBSD,
-        linux::EasyOS
+        linux::EasyOS,
+        linux::EndeavourOS,
+        linux::EndlessOS,
+        linux::Fedora,
+        other::FreeDOS,
     );
 
     let distros = futures::future::join_all(futures)

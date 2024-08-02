@@ -315,3 +315,32 @@ impl Distro for CachyOS {
             .into()
     }
 }
+
+const ENDEAVOUROS_MIRROR: &str = "https://mirror.alpix.eu/endeavouros/iso/";
+
+pub struct EndeavourOS;
+impl Distro for EndeavourOS {
+    const NAME: &'static str = "endeavouros";
+    const PRETTY_NAME: &'static str = "EndeavourOS";
+    const HOMEPAGE: Option<&'static str> = Some("https://endeavouros.com/");
+    const DESCRIPTION: Option<&'static str> = Some("Provides an Arch experience without the hassle of installing it manually for both x86_64 and ARM systems.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let iso_regex = Regex::new(r#"href="(EndeavourOS_[^\d]+(\d{4}.\d{2}.\d{2}).iso)""#).unwrap();
+        let page = capture_page(ENDEAVOUROS_MIRROR).await?;
+        let futures = iso_regex.captures_iter(&page).map(|c| c.extract()).map(|(_, [iso, release])| {
+            let url = ENDEAVOUROS_MIRROR.to_string() + iso;
+            let checksum_url = url.clone() + ".sha512sum";
+            async move {
+                let checksum = capture_page(&checksum_url)
+                    .await
+                    .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
+                Config {
+                    release: Some(release.to_string()),
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                    ..Default::default()
+                }
+            }
+        });
+        futures::future::join_all(futures).await.into()
+    }
+}
