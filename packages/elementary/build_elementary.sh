@@ -7,8 +7,9 @@ if [ ! -d /output ]; then
     exit 1
 fi
 
+RELEASE="${RELEASE/-build/}"
 case "${RELEASE}" in
-    "8-daily") ./build.sh etc/terraform-daily-8.0-azure.conf;;
+    "8") ./build.sh etc/terraform-daily-8.0-azure.conf;;
     "stable") ./build.sh;;
 esac
 
