@@ -23,7 +23,7 @@ impl Distro for BigLinux {
         data.reverse();
 
         let futures = data.into_iter().map(|c| c.extract()).map(|(_, [iso, release, edition])| {
-            let url = BIGLINUX_MIRROR.to_string() + &iso;
+            let url = BIGLINUX_MIRROR.to_string() + iso;
             let checksum_url = url.clone() + ".md5";
             async move {
                 let checksum = capture_page(&checksum_url)
