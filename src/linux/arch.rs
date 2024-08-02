@@ -344,3 +344,50 @@ impl Distro for EndeavourOS {
         futures::future::join_all(futures).await.into()
     }
 }
+
+const GARUDA_MIRROR: &str = "https://iso.builds.garudalinux.org/iso/latest/garuda/";
+
+pub struct Garuda;
+impl Distro for Garuda {
+    const NAME: &'static str = "garuda";
+    const PRETTY_NAME: &'static str = "Garuda Linux";
+    const HOMEPAGE: Option<&'static str> = Some("https://garudalinux.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Feature rich and easy to use Linux distribution.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let edition_html = capture_page(GARUDA_MIRROR).await?;
+        let edition_regex = Regex::new(r#"href="([^.]+)\/""#).unwrap();
+        let iso_regex = Arc::new(Regex::new(r#"href="([^"]+.iso)""#).unwrap());
+
+        let futures = edition_regex.captures_iter(&edition_html).map(|c| {
+            let edition = c[1].to_string();
+            let mirror = format!("{GARUDA_MIRROR}{edition}/");
+            let iso_regex = iso_regex.clone();
+
+            async move {
+                let page = capture_page(&mirror).await?;
+                let iso = &iso_regex.captures(&page)?[1];
+                let url = format!("{mirror}{iso}");
+                let checksum = {
+                    let checksum_url = url.clone() + ".sha256";
+                    capture_page(&checksum_url)
+                        .await
+                        .and_then(|c| c.split_whitespace().next().map(ToString::to_string))
+                };
+
+                Some(Config {
+                    release: Some("latest".to_string()),
+                    edition: Some(edition),
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                    ..Default::default()
+                })
+            }
+        });
+
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
