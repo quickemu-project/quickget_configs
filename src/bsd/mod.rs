@@ -2,7 +2,6 @@ use crate::store_data::{ArchiveFormat, ChecksumSeparation, Config, Disk, Distro,
 use crate::utils::capture_page;
 use quickemu::config::{Arch, GuestOS};
 use regex::Regex;
-use std::f64::consts::PI;
 use std::sync::Arc;
 
 const FREEBSD_X86_64_RELEASES: &str = "https://download.freebsd.org/ftp/releases/amd64/amd64/";
