@@ -310,6 +310,7 @@ impl Distro for Elementary {
             .and_then(|html| checksum_regex.captures(&html).map(|c| c[1].to_string()));
 
         vec![Config {
+            release: Some("latest".to_string()),
             iso: Some(vec![Source::Web(WebSource::new(dl_link, checksum, None, None))]),
             ..Default::default()
         }]
