@@ -20,22 +20,21 @@ impl Distro for Archcraft {
         let releases = capture_page(ARCHCRAFT_MIRROR).await?;
         let releases_regex = Regex::new(r#""name":"v([^"]+)""#).unwrap();
         let url_regex = Arc::new(Regex::new(r#""name":"archcraft-.*?-x86_64.iso".*?"download_url":"([^"]+)".*?"name":"archcraft-.*?-x86_64.iso.sha256sum".*?"download_url":"([^"]+)""#).unwrap());
-        let futures = releases_regex.captures_iter(&releases).take(3).map(|r| {
-            let release = r[1].to_string();
+        let futures = releases_regex.captures_iter(&releases).take(3).map(|c| {
+            let release = c[1].to_string();
             let mirror = format!("{ARCHCRAFT_MIRROR}v{release}/");
             let url_regex = url_regex.clone();
             async move {
                 let page = capture_page(&mirror).await?;
                 let urls = url_regex.captures(&page)?;
-                let download_url = urls[1].to_string();
-                let checksum_url = &urls[2];
+                let (_, [download_url, checksum_url]) = urls.extract();
                 let checksum = capture_page(checksum_url)
                     .await
                     .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
                 Some(Config {
                     release: Some(release),
                     edition: None,
-                    iso: Some(vec![Source::Web(WebSource::new(download_url, checksum, None, None))]),
+                    iso: Some(vec![Source::Web(WebSource::new(download_url.into(), checksum, None, None))]),
                     ..Default::default()
                 })
             }

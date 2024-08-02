@@ -29,8 +29,8 @@ impl Distro for Antix {
                 .join("\n")
         };
 
-        let futures = releases_regex.captures_iter(&releases).take(3).map(|r| {
-            let release = r[1].to_string();
+        let futures = releases_regex.captures_iter(&releases).take(3).map(|c| {
+            let release = c[1].to_string();
             let mirror = format!("{ANTIX_MIRROR}antiX-{release}/");
             let checksum_mirror = format!("{mirror}README.txt/download");
             let runit_mirror = format!("{mirror}runit-antiX-{release}/");
@@ -57,7 +57,7 @@ impl Distro for Antix {
                             let edition = c[2].to_string() + ending;
                             let url = c[3].to_string();
                             Config {
-                                release: Some(release.clone()),
+                                release: Some(release.to_string()),
                                 edition: Some(edition),
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                 ..Default::default()
@@ -105,14 +105,13 @@ impl Distro for BunsenLabs {
 
         release_regex
             .captures_iter(&html)
-            .map(|c| {
-                let iso = &c[1];
+            .map(|c| c.extract())
+            .map(|(_, [iso, release])| {
                 let checksum = checksums.remove(iso);
                 let url = format!("{BUNSENLABS_MIRROR}{iso}");
-                let release = c[2].to_string();
 
                 Config {
-                    release: Some(release),
+                    release: Some(release.to_string()),
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                     ..Default::default()
                 }
@@ -203,14 +202,13 @@ impl Distro for Debian {
                     Some(
                         live_regex
                             .captures_iter(&page)
-                            .map(|c| {
-                                let iso = &c[1];
-                                let edition = c[2].to_string();
+                            .map(|c| c.extract())
+                            .map(|(_, [iso, edition])| {
                                 let url = format!("{live_mirror}{iso}");
                                 let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                                 Config {
                                     release: Some(release.to_string()),
-                                    edition: Some(edition),
+                                    edition: Some(edition.to_string()),
                                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                     ..Default::default()
                                 }
@@ -235,14 +233,13 @@ impl Distro for Debian {
                             Some(
                                 netinst_regex
                                     .captures_iter(&page)
-                                    .map(|c| {
-                                        let iso = &c[1];
-                                        let edition = c[2].to_string();
+                                    .map(|c| c.extract())
+                                    .map(|(_, [iso, edition])| {
                                         let url = format!("{netinst_mirror}{iso}");
                                         let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                                         Config {
                                             release: Some(release.to_string()),
-                                            edition: Some(edition),
+                                            edition: Some(edition.to_string()),
                                             iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                             arch: arch.clone(),
                                             ..Default::default()
@@ -354,7 +351,6 @@ impl Distro for EasyOS {
                             release_regex
                                 .captures_iter(&releases_html)
                                 .map(|c| {
-                                    println!("{mirror}{}", &c[1]);
                                     let release = c[1].to_string();
                                     let mirror = mirror.clone() + &release + "/";
                                     (release, mirror)
