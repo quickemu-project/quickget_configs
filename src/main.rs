@@ -57,6 +57,7 @@ async fn main() {
         linux::Garuda,
         linux::Garuda,
         linux::Gentoo,
+        bsd::GhostBSD,
     );
 
     let distros = futures::future::join_all(futures)
