@@ -2,6 +2,7 @@ use crate::store_data::{ArchiveFormat, ChecksumSeparation, Config, Disk, Distro,
 use crate::utils::capture_page;
 use quickemu::config::{Arch, GuestOS};
 use regex::Regex;
+use std::f64::consts::PI;
 use std::sync::Arc;
 
 const FREEBSD_X86_64_RELEASES: &str = "https://download.freebsd.org/ftp/releases/amd64/amd64/";
@@ -148,6 +149,72 @@ impl Distro for DragonFlyBSD {
                     ..Default::default()
                 }
             })
+            .collect::<Vec<Config>>()
+            .into()
+    }
+}
+
+const GHOSTBSD_MIRROR: &str = "https://download.ghostbsd.org/releases/amd64/";
+
+pub struct GhostBSD;
+impl Distro for GhostBSD {
+    const NAME: &'static str = "ghostbsd";
+    const PRETTY_NAME: &'static str = "GhostBSD";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.ghostbsd.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Simple, elegant desktop BSD Operating System.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let release_html = capture_page(GHOSTBSD_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="(latest|[\d\.]+)\/""#).unwrap();
+        let iso_regex = Arc::new(Regex::new(r#"href="(GhostBSD-[\d\.]+(-[\w]+)?.iso)""#).unwrap());
+
+        let mut releases = release_regex
+            .captures_iter(&release_html)
+            .map(|r| (r[1].to_string(), format!("{GHOSTBSD_MIRROR}{}/", &r[1])))
+            .collect::<Vec<_>>();
+        releases.reverse();
+
+        let futures = releases.into_iter().take(4).map(|(release, mirror)| {
+            let iso_regex = iso_regex.clone();
+
+            async move {
+                let iso_html = capture_page(&mirror).await?;
+                let futures = iso_regex
+                    .captures_iter(&iso_html)
+                    .map(|c| {
+                        let release = release.clone();
+                        let edition = match c.get(2) {
+                            Some(edition) => edition.as_str()[1..].to_string(),
+                            None => "MATE".to_string(),
+                        };
+
+                        let iso = &c[1];
+                        let url = mirror.clone() + iso;
+                        let checksum_url = format!("{mirror}{iso}.sha256");
+
+                        async move {
+                            let checksum = capture_page(&checksum_url)
+                                .await
+                                .and_then(|cs| cs.split_once('=').map(|(_, checksum)| checksum.trim().to_string()));
+
+                            Config {
+                                guest_os: GuestOS::GhostBSD,
+                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                release: Some(release),
+                                edition: Some(edition),
+                                ..Default::default()
+                            }
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                Some(futures::future::join_all(futures).await)
+            }
+        });
+
+        futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
             .collect::<Vec<Config>>()
             .into()
     }
