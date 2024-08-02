@@ -309,3 +309,54 @@ impl Distro for Gentoo {
             .into()
     }
 }
+
+const GNOMEOS_MIRROR: &str = "https://download.gnome.org/gnomeos/";
+
+pub struct GnomeOS;
+impl Distro for GnomeOS {
+    const NAME: &'static str = "gnomeos";
+    const PRETTY_NAME: &'static str = "GNOME OS";
+    const HOMEPAGE: Option<&'static str> = Some("https://os.gnome.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Alpha nightly bleeding edge distro of GNOME");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let release_html = capture_page(GNOMEOS_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="(\d[^/]+)\/""#).unwrap();
+        let iso_regex = Arc::new(Regex::new(r#"href="(gnome_os.*?.iso)""#).unwrap());
+
+        let mut releases = release_regex
+            .captures_iter(&release_html)
+            .map(|r| (r[1].to_string(), format!("{GNOMEOS_MIRROR}{}/", &r[1])))
+            .collect::<Vec<_>>();
+        releases.reverse();
+
+        let futures = releases.into_iter().take(6).map(|(release, mirror)| {
+            let iso_regex = iso_regex.clone();
+            async move {
+                let page = capture_page(&mirror).await?;
+                let iso = &iso_regex.captures(&page)?[1];
+                let url = format!("{mirror}{iso}");
+                Some(Config {
+                    release: Some(release),
+                    iso: Some(vec![Source::Web(WebSource::url_only(url))]),
+                    ..Default::default()
+                })
+            }
+        });
+
+        let mut configs = futures::future::join_all(futures)
+            .await
+            .into_iter()
+            .flatten()
+            .collect::<Vec<Config>>();
+
+        configs.push(Config {
+            release: Some("nightly".to_string()),
+            iso: Some(vec![Source::Web(WebSource::url_only(
+                "https://os.gnome.org/download/latest/gnome_os_installer.iso",
+            ))]),
+            ..Default::default()
+        });
+
+        Some(configs)
+    }
+}
