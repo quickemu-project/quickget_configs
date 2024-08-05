@@ -283,7 +283,7 @@ impl Distro for Gentoo {
                             async move {
                                 let checksum = capture_page(&checksum_url).await.and_then(|cs| {
                                     cs.lines()
-                                        .find(|l| l.contains(iso))
+                                        .find(|l| l.contains("iso"))
                                         .and_then(|l| l.split_whitespace().next().map(ToString::to_string))
                                 });
 
