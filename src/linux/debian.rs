@@ -3,7 +3,7 @@ use crate::{
     utils::{capture_page, GatherData, GithubAPI},
 };
 use quickemu::config::{Arch, DiskFormat};
-use quickget::data_structures::ArchiveFormat;
+use quickget_core::data_structures::ArchiveFormat;
 use regex::Regex;
 use std::{collections::HashMap, sync::Arc};
 
@@ -57,7 +57,7 @@ impl Distro for Antix {
                             let edition = c[2].to_string() + ending;
                             let url = c[3].to_string();
                             Config {
-                                release: Some(release.to_string()),
+                                release: release.to_string(),
                                 edition: Some(edition),
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                 ..Default::default()
@@ -111,7 +111,7 @@ impl Distro for BunsenLabs {
                 let url = format!("{BUNSENLABS_MIRROR}{iso}");
 
                 Config {
-                    release: Some(release.to_string()),
+                    release: release.to_string(),
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                     ..Default::default()
                 }
@@ -147,7 +147,7 @@ impl Distro for CrunchbangPlusPlus {
                     .join("\n");
                 let checksum = ChecksumSeparation::Whitespace.build_with_data(&checksum_data).remove(&iso.name);
                 Some(Config {
-                    release: Some(release),
+                    release,
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                     ..Default::default()
                 })
@@ -207,7 +207,7 @@ impl Distro for Debian {
                                 let url = format!("{live_mirror}{iso}");
                                 let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                                 Config {
-                                    release: Some(release.to_string()),
+                                    release: release.to_string(),
                                     edition: Some(edition.to_string()),
                                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                     ..Default::default()
@@ -238,7 +238,7 @@ impl Distro for Debian {
                                         let url = format!("{netinst_mirror}{iso}");
                                         let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                                         Config {
-                                            release: Some(release.to_string()),
+                                            release: release.to_string(),
                                             edition: Some(edition.to_string()),
                                             iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                             arch: arch.clone(),
@@ -301,7 +301,7 @@ impl Distro for Devuan {
                             let url = mirror.clone() + iso;
                             let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                             Config {
-                                release: Some(release),
+                                release,
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                 ..Default::default()
                             }
@@ -415,7 +415,7 @@ impl Distro for EasyOS {
                 let url = mirror + &img_capture[1];
                 let archive_format = if img_capture.get(2).is_some() { Some(ArchiveFormat::Gz) } else { None };
                 Some(Config {
-                    release: Some(release),
+                    release,
                     disk_images: Some(vec![Disk {
                         source: Source::Web(WebSource::new(url, checksum, archive_format, None)),
                         format: DiskFormat::Raw,
@@ -471,7 +471,7 @@ impl Distro for EndlessOS {
                             .await
                             .and_then(|cs| cs.split_whitespace().next().map(ToString::to_string));
                         Some(Config {
-                            release: Some(release),
+                            release,
                             edition: Some(edition),
                             iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                             ..Default::default()

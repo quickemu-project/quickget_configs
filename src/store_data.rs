@@ -1,7 +1,7 @@
 use crate::utils::all_valid;
 use once_cell::sync::Lazy;
 pub use quickemu::config::Arch;
-pub use quickget::data_structures::{ArchiveFormat, Config, Disk, Source, WebSource, OS};
+pub use quickget_core::data_structures::{ArchiveFormat, Config, Disk, Source, WebSource, OS};
 use regex::Regex;
 use std::{collections::HashMap, sync::Arc};
 
@@ -51,7 +51,7 @@ impl<T: Distro + Send> ToOS for T {
                     log::warn!(
                         "Removing {} {} {} {} due to unresolvable URL",
                         Self::PRETTY_NAME,
-                        config.release.unwrap_or_default(),
+                        config.release,
                         config.edition.unwrap_or_default(),
                         config.arch
                     );

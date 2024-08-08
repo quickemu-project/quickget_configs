@@ -48,7 +48,7 @@ impl Distro for FreeDOS {
                             };
                             Config {
                                 guest_os: GuestOS::FreeDOS,
-                                release: Some(release.clone()),
+                                release: release.clone(),
                                 edition: Some(edition.to_string()),
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, archive_format, None))]),
                                 ..Default::default()

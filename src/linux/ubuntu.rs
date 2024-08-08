@@ -4,7 +4,7 @@ use crate::{
 };
 use once_cell::sync::Lazy;
 use quickemu::config::Arch;
-use quickget::data_structures::ArchiveFormat;
+use quickget_core::data_structures::ArchiveFormat;
 use regex::Regex;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -189,13 +189,13 @@ async fn get_ubuntu_releases(variant: UbuntuVariant) -> Option<Vec<Config>> {
                     Some(match arch {
                         Arch::riscv64 => Config {
                             img: Some(vec![Source::Web(WebSource::new(iso, checksum, Some(ArchiveFormat::Gz), None))]),
-                            release: Some(release),
+                            release,
                             arch,
                             ..Default::default()
                         },
                         _ => Config {
                             iso: Some(vec![Source::Web(WebSource::new(iso, checksum, None, None))]),
-                            release: Some(release),
+                            release,
                             arch,
                             ..Default::default()
                         },
@@ -347,7 +347,7 @@ impl Distro for Bodhi {
                             .and_then(|c| c.split_whitespace().next().map(Into::into));
                         Config {
                             iso: Some(vec![Source::Web(WebSource::new(iso, checksum, None, None))]),
-                            release: Some(release),
+                            release,
                             edition: Some(edition),
                             ..Default::default()
                         }

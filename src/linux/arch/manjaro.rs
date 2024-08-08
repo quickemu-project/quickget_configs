@@ -30,7 +30,7 @@ impl Distro for BigLinux {
                     .await
                     .and_then(|s| s.split_whitespace().next().map(ToString::to_string));
                 Config {
-                    release: Some(release.to_string()),
+                    release: release.to_string(),
                     edition: Some(edition.to_string()),
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                     ..Default::default()
