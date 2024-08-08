@@ -60,7 +60,7 @@ impl Distro for NixOS {
                                     .await
                                     .map(|h| h.split_whitespace().next().unwrap().to_string());
                                 Some(Config {
-                                    release: Some(release),
+                                    release,
                                     edition: Some(edition),
                                     arch: arch?,
                                     iso: Some(vec![Source::Web(WebSource::new(url, hash, None, None))]),
@@ -119,7 +119,7 @@ impl Distro for Alpine {
                         let (_, [iso, checksum]) = iso_regex.captures(&page)?.extract();
                         let url = format!("{ALPINE_MIRROR}{release}/releases/{arch}/{iso}");
                         Some(Config {
-                            release: Some(release.to_string()),
+                            release: release.to_string(),
                             arch: arch.clone(),
                             iso: Some(vec![Source::Web(WebSource::new(url, Some(checksum.into()), None, None))]),
                             ..Default::default()
@@ -169,7 +169,7 @@ impl Distro for Batocera {
                     let captures = iso_regex.captures(&page)?;
                     let iso = format!("{url}{}", &captures[1]);
                     Some(Config {
-                        release: Some(release.to_string()),
+                        release: release.to_string(),
                         img: Some(vec![Source::Web(WebSource::new(iso, None, Some(ArchiveFormat::Gz), None))]),
                         ..Default::default()
                     })
@@ -230,7 +230,7 @@ impl Distro for ChimeraLinux {
                             let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                             let url = format!("{url}{iso}");
                             Config {
-                                release: Some(release.clone()),
+                                release: release.clone(),
                                 edition: Some(edition.to_string()),
                                 arch,
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),

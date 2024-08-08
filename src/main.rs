@@ -89,18 +89,16 @@ impl DistroSort for Vec<OS> {
         self.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         self.iter_mut().for_each(|d| {
             d.releases.sort_unstable_by(|a, b| {
-                if let (Some(release_a), Some(release_b)) = (&a.release, &b.release) {
-                    let (release_a, release_b) = (release_a.trim_start_matches('v'), release_b.trim_start_matches('v'));
-                    let (mut a, mut b) = (release_a.split('.'), release_b.split('.'));
-                    while let (Some(a), Some(b)) = (a.next(), b.next()) {
-                        if let (Ok(a), Ok(b)) = (a.parse::<u64>(), b.parse::<u64>()) {
-                            let comparison = b.cmp(&a);
-                            if comparison != std::cmp::Ordering::Equal {
-                                return comparison;
-                            }
-                        } else {
-                            break;
+                let (release_a, release_b) = (a.release.trim_start_matches('v'), b.release.trim_start_matches('v'));
+                let (mut split_a, mut split_b) = (release_a.split('.'), release_b.split('.'));
+                while let (Some(a), Some(b)) = (split_a.next(), split_b.next()) {
+                    if let (Ok(a), Ok(b)) = (a.parse::<u64>(), b.parse::<u64>()) {
+                        let comparison = b.cmp(&a);
+                        if comparison != std::cmp::Ordering::Equal {
+                            return comparison;
                         }
+                    } else {
+                        break;
                     }
                 }
                 b.release.cmp(&a.release).then(a.edition.cmp(&b.edition))

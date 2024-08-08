@@ -51,7 +51,7 @@ impl Distro for FreeBSD {
                                         Config {
                                             guest_os: GuestOS::FreeBSD,
                                             iso: Some(vec![Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Xz), None))]),
-                                            release: Some(release.clone()),
+                                            release: release.clone(),
                                             edition: Some(edition.to_string()),
                                             arch: arch.clone(),
                                             ..Default::default()
@@ -75,7 +75,7 @@ impl Distro for FreeBSD {
                                         source: Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Xz), None)),
                                         ..Default::default()
                                     }]),
-                                    release: Some(vm_image_release),
+                                    release: vm_image_release,
                                     edition: Some("vm-image".to_string()),
                                     arch: arch.clone(),
                                     ..Default::default()
@@ -144,7 +144,7 @@ impl Distro for DragonFlyBSD {
                 Config {
                     guest_os: GuestOS::DragonFlyBSD,
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Bz2), None))]),
-                    release: Some(release),
+                    release,
                     ..Default::default()
                 }
             })

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use once_cell::sync::Lazy;
-use quickget::data_structures::ArchiveFormat;
 use quickemu::config::Arch;
+use quickget_core::data_structures::ArchiveFormat;
 use reqwest::{StatusCode, Url};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};

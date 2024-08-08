@@ -3,7 +3,7 @@ use crate::{
     utils::{arch_from_str, capture_page, FedoraRelease, GatherData},
 };
 use quickemu::config::DiskFormat;
-use quickget::data_structures::{ArchiveFormat, Disk};
+use quickget_core::data_structures::{ArchiveFormat, Disk};
 use regex::Regex;
 use std::sync::Arc;
 
@@ -43,7 +43,7 @@ impl Distro for Alma {
                                     let url = format!("{mirror}{iso}");
                                     let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                                     Config {
-                                        release: Some(release.to_string()),
+                                        release: release.to_string(),
                                         edition: Some(edition.to_string()),
                                         arch: arch.clone(),
                                         iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
@@ -101,7 +101,7 @@ impl Distro for Bazzite {
                         .await
                         .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
                     Some(Config {
-                        release: Some("latest".to_string()),
+                        release: "latest".to_string(),
                         edition: Some(edition),
                         iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                         ..Default::default()
@@ -160,7 +160,7 @@ impl Distro for CentOSStream {
                                         let url = format!("{final_mirror}{iso}{CENTOS_URL_SUFFIX}");
                                         let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                                         Config {
-                                            release: Some(release.clone()),
+                                            release: release.clone(),
                                             edition: Some(edition.to_string()),
                                             arch: arch.clone(),
                                             iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
@@ -225,7 +225,7 @@ impl Distro for Fedora {
                     let source = Source::Web(WebSource::new(link, sha256, archive_format, None));
                     let arch = arch_from_str(&arch)?;
                     let mut config = Config {
-                        release: Some(release),
+                        release,
                         edition: Some(edition),
                         arch,
                         ..Default::default()

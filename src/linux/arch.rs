@@ -32,7 +32,7 @@ impl Distro for Archcraft {
                     .await
                     .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
                 Some(Config {
-                    release: Some(release),
+                    release,
                     edition: None,
                     iso: Some(vec![Source::Web(WebSource::new(download_url.into(), checksum, None, None))]),
                     ..Default::default()
@@ -69,7 +69,7 @@ impl Distro for ArchLinux {
                 let checksum = r.sha256_sum;
                 let release = if r.version == api_data.latest_version { "latest".to_string() } else { r.version };
                 Config {
-                    release: Some(release),
+                    release,
                     edition: None,
                     iso: Some(vec![Source::Web(WebSource::new(download_url, checksum, None, None))]),
                     ..Default::default()
@@ -139,7 +139,7 @@ impl Distro for ArcoLinux {
                                     None
                                 };
                                 Config {
-                                    release: Some(release),
+                                    release,
                                     edition: Some(edition),
                                     iso: Some(vec![Source::Web(WebSource::new(download_url, checksum, None, None))]),
                                     ..Default::default()
@@ -184,7 +184,7 @@ impl Distro for ArtixLinux {
                 let download_url = format!("{ARTIX_MIRROR}{iso}");
                 let checksum = checksums.as_ref().and_then(|cs| cs.get(&iso)).map(ToString::to_string);
                 Config {
-                    release: Some(release),
+                    release,
                     edition: Some(edition),
                     iso: Some(vec![Source::Web(WebSource::new(download_url, checksum, None, None))]),
                     ..Default::default()
@@ -229,7 +229,7 @@ impl Distro for AthenaOS {
             let iso_url = d.assets.remove(iso_index).browser_download_url;
 
             Some(Config {
-                release: Some(release),
+                release,
                 iso: Some(vec![Source::Web(WebSource::new(iso_url, checksum, None, None))]),
                 ..Default::default()
             })
@@ -293,7 +293,7 @@ impl Distro for CachyOS {
                                 .await
                                 .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
                             Config {
-                                release: Some(release),
+                                release,
                                 edition: Some(edition),
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                 ..Default::default()
@@ -335,7 +335,7 @@ impl Distro for EndeavourOS {
                     .await
                     .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
                 Config {
-                    release: Some(release.to_string()),
+                    release: release.to_string(),
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                     ..Default::default()
                 }
