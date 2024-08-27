@@ -288,7 +288,7 @@ impl Distro for Gentoo {
                                 });
 
                                 Config {
-                                    release: Some("latest".to_string()),
+                                    release: "latest".to_string(),
                                     edition: Some(edition.to_string()),
                                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                     arch,
@@ -336,7 +336,7 @@ impl Distro for GnomeOS {
                 let iso = &iso_regex.captures(&page)?[1];
                 let url = format!("{mirror}{iso}");
                 Some(Config {
-                    release: Some(release),
+                    release,
                     iso: Some(vec![Source::Web(WebSource::url_only(url))]),
                     ..Default::default()
                 })
@@ -350,7 +350,7 @@ impl Distro for GnomeOS {
             .collect::<Vec<Config>>();
 
         configs.push(Config {
-            release: Some("nightly".to_string()),
+            release: "nightly".to_string(),
             iso: Some(vec![Source::Web(WebSource::url_only(
                 "https://os.gnome.org/download/latest/gnome_os_installer.iso",
             ))]),

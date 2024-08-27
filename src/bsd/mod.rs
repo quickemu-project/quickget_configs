@@ -198,7 +198,7 @@ impl Distro for GhostBSD {
                             Config {
                                 guest_os: GuestOS::GhostBSD,
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
-                                release: Some(release),
+                                release,
                                 edition: Some(edition),
                                 ..Default::default()
                             }
