@@ -375,7 +375,7 @@ impl Distro for Garuda {
                 };
 
                 Some(Config {
-                    release: Some("latest".to_string()),
+                    release: "latest".to_string(),
                     edition: Some(edition),
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                     ..Default::default()
