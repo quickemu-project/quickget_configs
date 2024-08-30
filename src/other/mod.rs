@@ -63,3 +63,43 @@ impl Distro for FreeDOS {
         Some(join_futures!(futures, 2))
     }
 }
+
+const HAIKU_MIRROR: &str = "http://mirror.rit.edu/haiku/";
+
+pub struct Haiku;
+impl Distro for Haiku {
+    const NAME: &'static str = "haiku";
+    const PRETTY_NAME: &'static str = "Haiku";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.haiku-os.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Specifically targets personal computing. Inspired by the BeOS, Haiku is fast, simple to use, easy to learn and yet very powerful.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let page = capture_page(HAIKU_MIRROR).await?;
+        let release_regex = Regex::new(r#"href="(r.*?)/""#).unwrap();
+        let iso_regex = Regex::new(r#"href="(haiku-r.?*-x86_64-anyboot.iso)""#).unwrap();
+
+        let futures = release_regex.captures_iter(&page).map(|c| {
+            let release = c[1].to_string();
+            let mirror = format!("{HAIKU_MIRROR}{release}/");
+            let iso_regex = iso_regex.clone();
+            async move {
+                let page = capture_page(&mirror).await?;
+                let iso_capture = iso_regex.captures(&page)?;
+                let iso = &iso_capture[1];
+                let url = format!("{mirror}{iso}");
+
+                let checksum_url = url.clone() + ".sha256";
+                let checksum = capture_page(&checksum_url)
+                    .await
+                    .and_then(|c| c.split_once('=').map(|(_, cs)| cs.trim().to_string()));
+
+                Some(Config {
+                    guest_os: GuestOS::Haiku,
+                    release,
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                    ..Default::default()
+                })
+            }
+        });
+        Some(join_futures!(futures, 1))
+    }
+}
