@@ -1,4 +1,5 @@
 use crate::utils::all_valid;
+use join_futures::join_futures;
 use once_cell::sync::Lazy;
 pub use quickemu::config::Arch;
 pub use quickget_core::data_structures::{ArchiveFormat, Config, Disk, Source, WebSource, OS};
@@ -40,7 +41,7 @@ impl<T: Distro + Send> ToOS for T {
             .concat();
             async move { all_valid(urls).await }
         });
-        let results = futures::future::join_all(futures).await;
+        let results = join_futures!(futures);
         let releases = releases
             .into_iter()
             .zip(results)

@@ -1118,6 +1118,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "join_futures"
+version = "0.1.0"
+
+[[package]]
 name = "js-sys"
 version = "0.3.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1649,6 +1653,7 @@ version = "0.7.3"
 dependencies = [
  "env_logger",
  "futures",
+ "join_futures",
  "libdeflater",
  "log",
  "once_cell",
@@ -2248,9 +2253,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "syn"
-version = "2.0.72"
+version = "2.0.76"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc4b9b9bf2add8093d3f2c0204471e951b2285580335de42f9d2534f3ae7a8af"
+checksum = "578e081a14e0cefc3279b0472138c513f37b41a08d5a3cca9b6e4e8ceb6cd525"
 dependencies = [
  "proc-macro2",
  "quote",

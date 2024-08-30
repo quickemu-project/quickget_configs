@@ -2,6 +2,7 @@ use crate::{
     store_data::{Config, Distro, Source, WebSource},
     utils::capture_page,
 };
+use join_futures::join_futures;
 use once_cell::sync::Lazy;
 use quickemu::config::Arch;
 use quickget_core::data_structures::ArchiveFormat;
@@ -205,12 +206,7 @@ async fn get_ubuntu_releases(variant: UbuntuVariant) -> Option<Vec<Config>> {
             .collect::<Vec<_>>()
     });
 
-    futures::future::join_all(futures)
-        .await
-        .into_iter()
-        .flatten()
-        .collect::<Vec<Config>>()
-        .into()
+    Some(join_futures!(futures, 1))
 }
 
 static UBUNTU_RELEASES: Lazy<Vec<String>> = Lazy::new(|| {
@@ -353,16 +349,10 @@ impl Distro for Bodhi {
                         }
                     }
                 });
-                Some(futures::future::join_all(futures).await)
+                Some(join_futures!(futures, 0))
             }
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }

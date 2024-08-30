@@ -2,6 +2,7 @@ use crate::{
     store_data::{Config, Distro, Source, WebSource},
     utils::capture_page,
 };
+use join_futures::join_futures;
 use regex::Regex;
 
 const BIGLINUX_MIRROR: &str = "https://iso.biglinux.com.br/";
@@ -38,6 +39,6 @@ impl Distro for BigLinux {
             }
         });
 
-        futures::future::join_all(futures).await.into()
+        Some(join_futures!(futures))
     }
 }

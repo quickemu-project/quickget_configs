@@ -4,6 +4,7 @@ use crate::{
     store_data::{ArchiveFormat, ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::{arch_from_str, capture_page},
 };
+use join_futures::join_futures;
 use quickemu::config::Arch;
 use regex::Regex;
 use serde::Deserialize;
@@ -72,12 +73,7 @@ impl Distro for NixOS {
                 );
             };
         }
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 1))
     }
 }
 
@@ -129,12 +125,7 @@ impl Distro for Alpine {
                 .collect::<Vec<_>>()
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 1))
     }
 }
 
@@ -177,12 +168,7 @@ impl Distro for Batocera {
             })
             .collect::<Vec<_>>();
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 1))
     }
 }
 
@@ -242,13 +228,7 @@ impl Distro for ChimeraLinux {
             }
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }
 
@@ -297,16 +277,10 @@ impl Distro for Gentoo {
                             }
                         });
 
-                    Some(futures::future::join_all(futures).await)
+                    Some(join_futures!(futures))
                 }
             });
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }
 
@@ -343,11 +317,7 @@ impl Distro for GnomeOS {
             }
         });
 
-        let mut configs = futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>();
+        let mut configs = join_futures!(futures, 1);
 
         configs.push(Config {
             release: "nightly".to_string(),

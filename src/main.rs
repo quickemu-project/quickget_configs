@@ -4,8 +4,8 @@ mod other;
 mod store_data;
 mod utils;
 
+use join_futures::join_futures;
 use std::{fs::File, io::Write};
-
 use store_data::{ToOS, OS};
 use tokio::spawn;
 
@@ -61,13 +61,7 @@ async fn main() {
         linux::GnomeOS,
     );
 
-    let distros = futures::future::join_all(futures)
-        .await
-        .into_iter()
-        .flatten()
-        .flatten()
-        .collect::<Vec<OS>>()
-        .distro_sort();
+    let distros = join_futures!(futures, 2, Vec<OS>).distro_sort();
 
     if let Ok(output) = serde_json::to_string_pretty(&distros) {
         println!("{}", output);
