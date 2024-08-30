@@ -59,6 +59,7 @@ async fn main() {
         linux::Gentoo,
         bsd::GhostBSD,
         linux::GnomeOS,
+        linux::Guix,
     );
 
     let distros = join_futures!(futures, 2, Vec<OS>).distro_sort();

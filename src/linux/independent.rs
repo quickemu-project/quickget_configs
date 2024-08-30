@@ -330,3 +330,33 @@ impl Distro for GnomeOS {
         Some(configs)
     }
 }
+
+const GUIX_MIRROR: &str = "https://mirror.fcix.net/gnu/guix/";
+const FINAL_GUIX_MIRROR: &str = "https://ftpmirror.gnu.org/gnu/guix/";
+
+pub struct Guix;
+impl Distro for Guix {
+    const NAME: &'static str = "guix";
+    const PRETTY_NAME: &'static str = "Guix";
+    const HOMEPAGE: Option<&'static str> = Some("https://guix.gnu.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Distribution of the GNU operating system developed by the GNU Project—which respects the freedom of computer users.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let page = capture_page(GUIX_MIRROR).await?;
+        let iso_regex = Regex::new(r#"href="(guix-system-install-(\d(?:\.\d){2})\.(.*?)-linux.iso)""#).unwrap();
+
+        Some(
+            iso_regex
+                .captures_iter(&page)
+                .map(|c| c.extract())
+                .filter_map(|(_, [iso, release, arch])| {
+                    arch_from_str(arch).map(|arch| Config {
+                        release: release.to_string(),
+                        iso: Some(vec![Source::Web(WebSource::url_only(format!("{FINAL_GUIX_MIRROR}{iso}")))]),
+                        arch,
+                        ..Default::default()
+                    })
+                })
+                .collect(),
+        )
+    }
+}
