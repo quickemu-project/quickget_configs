@@ -2,6 +2,7 @@ use crate::{
     store_data::{ChecksumSeparation, Config, Disk, Distro, Source, WebSource},
     utils::{capture_page, GatherData, GithubAPI},
 };
+use join_futures::join_futures;
 use quickemu::config::{Arch, DiskFormat};
 use quickget_core::data_structures::ArchiveFormat;
 use regex::Regex;
@@ -68,13 +69,7 @@ impl Distro for Antix {
             }
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }
 
@@ -96,12 +91,7 @@ impl Distro for BunsenLabs {
             let url = format!("{BUNSENLABS_MIRROR}{}", &c[1]);
             async move { ChecksumSeparation::Whitespace.build(&url).await }
         });
-        let mut checksums = futures::future::join_all(checksum_futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<HashMap<String, String>>();
+        let mut checksums = join_futures!(checksum_futures, 2, HashMap<String, String>);
 
         release_regex
             .captures_iter(&html)
@@ -254,14 +244,7 @@ impl Distro for Debian {
             })
             .flatten();
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 3))
     }
 }
 
@@ -310,13 +293,7 @@ impl Distro for Devuan {
                 )
             }
         });
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }
 
@@ -360,22 +337,10 @@ impl Distro for EasyOS {
                     }
                 });
 
-                Some(
-                    futures::future::join_all(futures)
-                        .await
-                        .into_iter()
-                        .flatten()
-                        .collect::<Vec<_>>(),
-                )
+                Some(join_futures!(futures))
             }
         });
-        let mut releases = futures::future::join_all(release_futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .flatten()
-            .collect::<Vec<_>>();
+        let mut releases = join_futures!(release_futures, 4, Vec<(String, String)>);
 
         releases.sort_by(|(a, _), (b, _)| {
             if let (Ok(a), Ok(b)) = (
@@ -425,12 +390,7 @@ impl Distro for EasyOS {
                 })
             }
         });
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 1))
     }
 }
 
@@ -478,17 +438,10 @@ impl Distro for EndlessOS {
                         })
                     }
                 });
-                Some(futures::future::join_all(futures).await)
+                Some(join_futures!(futures))
             }
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .flatten()
-            .collect::<Vec<_>>()
-            .into()
+        Some(join_futures!(futures, 3))
     }
 }

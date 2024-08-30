@@ -1,5 +1,6 @@
 use crate::store_data::{ArchiveFormat, ChecksumSeparation, Config, Distro, Source, WebSource};
 use crate::utils::capture_page;
+use join_futures::join_futures;
 use quickemu::config::GuestOS;
 use regex::Regex;
 use std::sync::Arc;
@@ -59,12 +60,6 @@ impl Distro for FreeDOS {
             }
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }

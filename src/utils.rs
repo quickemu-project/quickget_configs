@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use join_futures::join_futures;
 use once_cell::sync::Lazy;
 use quickemu::config::Arch;
 use quickget_core::data_structures::ArchiveFormat;
@@ -64,7 +65,7 @@ pub async fn all_valid(urls: Vec<String>) -> bool {
         }
         Some(successful)
     });
-    futures::future::join_all(futures).await.into_iter().all(|r| r.unwrap_or(true))
+    join_futures!(futures).into_iter().all(|r| r.unwrap_or(true))
 }
 
 pub fn arch_from_str(arch: &str) -> Option<Arch> {

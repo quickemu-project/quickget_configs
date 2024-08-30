@@ -4,6 +4,7 @@ use crate::{
     store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::{capture_page, GatherData, GithubAPI},
 };
+use join_futures::join_futures;
 use regex::Regex;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -39,12 +40,7 @@ impl Distro for Archcraft {
                 })
             }
         });
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 1))
     }
 }
 
@@ -147,17 +143,11 @@ impl Distro for ArcoLinux {
                             }
                         })
                         .collect::<Vec<_>>();
-                    Some(futures::future::join_all(futures).await)
+                    Some(join_futures!(futures))
                 }
             })
             .collect::<Vec<_>>();
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }
 
@@ -235,12 +225,7 @@ impl Distro for AthenaOS {
             })
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 1))
     }
 }
 
@@ -302,17 +287,11 @@ impl Distro for CachyOS {
                     })
                     .collect::<Vec<_>>();
 
-                Some(futures::future::join_all(futures).await)
+                Some(join_futures!(futures))
             }
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }
 
@@ -341,7 +320,7 @@ impl Distro for EndeavourOS {
                 }
             }
         });
-        futures::future::join_all(futures).await.into()
+        Some(join_futures!(futures))
     }
 }
 
@@ -383,11 +362,6 @@ impl Distro for Garuda {
             }
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 1))
     }
 }

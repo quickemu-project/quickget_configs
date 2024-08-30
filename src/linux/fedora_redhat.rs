@@ -2,6 +2,7 @@ use crate::{
     store_data::{Arch, ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::{arch_from_str, capture_page, FedoraRelease, GatherData},
 };
+use join_futures::join_futures;
 use quickemu::config::DiskFormat;
 use quickget_core::data_structures::{ArchiveFormat, Disk};
 use regex::Regex;
@@ -57,13 +58,7 @@ impl Distro for Alma {
                 .collect::<Vec<_>>()
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }
 
@@ -110,12 +105,7 @@ impl Distro for Bazzite {
             })
             .collect::<Vec<_>>();
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 1))
     }
 }
 
@@ -175,13 +165,7 @@ impl Distro for CentOSStream {
             })
             .collect::<Vec<_>>();
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }
 

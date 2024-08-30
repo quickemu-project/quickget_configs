@@ -1,5 +1,6 @@
 use crate::store_data::{ArchiveFormat, ChecksumSeparation, Config, Disk, Distro, Source, WebSource};
 use crate::utils::capture_page;
+use join_futures::join_futures;
 use quickemu::config::{Arch, GuestOS};
 use regex::Regex;
 use std::sync::Arc;
@@ -84,22 +85,14 @@ impl Distro for FreeBSD {
                             [normal_editions, vm_image]
                         })
                         .collect::<Vec<_>>();
-                    Some(futures::future::join_all(futures).await)
+                    Some(join_futures!(futures))
                 } else {
                     log::warn!("Failed to fetch FreeBSD {arch} releases");
                     None
                 }
             }
         });
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 4))
     }
 }
 
@@ -205,16 +198,10 @@ impl Distro for GhostBSD {
                         }
                     })
                     .collect::<Vec<_>>();
-                Some(futures::future::join_all(futures).await)
+                Some(join_futures!(futures))
             }
         });
 
-        futures::future::join_all(futures)
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<Config>>()
-            .into()
+        Some(join_futures!(futures, 2))
     }
 }

@@ -1,0 +1,10 @@
+[package]
+name = "join_futures"
+version = "0.1.0"
+edition = "2021"
+
+[profile.dev]
+opt-level = 3
+
+[lib]
+proc-macro = true
