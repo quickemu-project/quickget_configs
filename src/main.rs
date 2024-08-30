@@ -61,6 +61,7 @@ async fn main() {
         linux::GnomeOS,
         linux::Guix,
         other::Haiku,
+        linux::HoloISO,
     );
 
     let distros = join_futures!(futures, 2, Vec<OS>).distro_sort();

@@ -2,7 +2,7 @@ pub mod manjaro;
 
 use crate::{
     store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
-    utils::{capture_page, GatherData, GithubAPI},
+    utils::{capture_page, GatherData, GithubAPI, GithubAPIValue},
 };
 use join_futures::join_futures;
 use regex::Regex;
@@ -363,5 +363,50 @@ impl Distro for Garuda {
         });
 
         Some(join_futures!(futures, 1))
+    }
+}
+
+const HOLOISO_API: &str = "https://api.github.com/repos/HoloISO/releases/releases";
+
+pub struct HoloISO;
+impl Distro for HoloISO {
+    const NAME: &'static str = "holoiso";
+    const PRETTY_NAME: &'static str = "HoloISO";
+    const HOMEPAGE: Option<&'static str> = Some("https://github.com/HoloISO/holoiso");
+    const DESCRIPTION: Option<&'static str> = Some("Bring the Steam Decks SteamOS Holo redistribution and provide a close-to-official SteamOS experience.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let holoiso_data = GithubAPI::gather_data(HOLOISO_API).await?;
+        let iso_regex = Regex::new(r#"https:\/\/cd2.holoiso.ru.eu.org\/holoiso-installer\/(beta|rel)\/holoiso.*?.iso"#).unwrap();
+        let sha256_regex = Regex::new(r#"(.*?)([A-Fa-f0-9]{64})"#).unwrap();
+
+        Some(
+            holoiso_data
+                .into_iter()
+                .flat_map(|GithubAPIValue { tag_name, body, .. }| {
+                    let sha256_data = sha256_regex
+                        .captures_iter(&body)
+                        .map(|c| (c[1].to_string(), c[2].to_string()))
+                        .collect::<Vec<_>>();
+                    iso_regex
+                        .captures_iter(&body)
+                        .map(|c| {
+                            let url = c[0].to_string();
+                            let checksum = sha256_data
+                                .iter()
+                                .find_map(|(prior, cs)| (prior.contains(&c[1])).then_some(cs.to_owned()));
+                            let mut release = tag_name.to_string();
+                            if &c[1] == "beta" {
+                                release += "-beta";
+                            }
+                            Config {
+                                release,
+                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                ..Default::default()
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .collect(),
+        )
     }
 }
