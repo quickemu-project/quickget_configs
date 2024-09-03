@@ -1,8 +1,10 @@
 use crate::store_data::{ArchiveFormat, ChecksumSeparation, Config, Distro, Source, WebSource};
 use crate::utils::capture_page;
+use isolang::Language;
 use join_futures::join_futures;
 use quickemu::config::GuestOS;
 use regex::Regex;
+use std::str::FromStr;
 use std::sync::Arc;
 
 const FREEDOS_MIRROR: &str = "https://www.ibiblio.org/pub/micro/pc-stuff/freedos/files/distributions/";
@@ -100,6 +102,57 @@ impl Distro for Haiku {
                 })
             }
         });
+        Some(join_futures!(futures, 1))
+    }
+}
+
+const KOLIBRIOS_MIRROR: &str = "https://builds.kolibrios.org/";
+
+pub struct KolibriOS;
+impl Distro for KolibriOS {
+    const NAME: &'static str = "kolibrios";
+    const PRETTY_NAME: &'static str = "KolibriOS";
+    const HOMEPAGE: Option<&'static str> = Some("https://kolibrios.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Tiny yet incredibly powerful and fast operating system.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let page = capture_page(KOLIBRIOS_MIRROR).await?;
+        let locale_regex = Regex::new(r#"href="(\w{2}_\w{2})\/""#).unwrap();
+
+        let futures = locale_regex.captures_iter(&page).map(|c| {
+            let locale = &c[1];
+            let language = locale
+                .split('_')
+                .next()
+                .and_then(|lang| Language::from_str(lang).ok().map(|lang| lang.to_string()))
+                .unwrap_or(locale.to_string());
+
+            let mirror = format!("{KOLIBRIOS_MIRROR}{locale}/");
+            let checksum_url = mirror.clone() + "sha256sums.txt";
+            async move {
+                let checksum_page = capture_page(&checksum_url).await?;
+                let iso_entry = checksum_page
+                    .lines()
+                    .find(|line| line.contains("iso"))
+                    .and_then(|line| line.split_once("  "));
+
+                let (checksum, iso_name) = match iso_entry {
+                    Some((cs, name)) => (Some(cs.to_string()), name),
+                    None => (None, "latest-iso.7z"),
+                };
+
+                let archive_format = (iso_name.ends_with(".7z")).then_some(ArchiveFormat::SevenZip);
+
+                let url = mirror.clone() + iso_name;
+                Some(Config {
+                    guest_os: GuestOS::KolibriOS,
+                    release: "latest".into(),
+                    edition: Some(language.to_string()),
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, archive_format, None))]),
+                    ..Default::default()
+                })
+            }
+        });
+
         Some(join_futures!(futures, 1))
     }
 }

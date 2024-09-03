@@ -63,6 +63,7 @@ async fn main() {
         other::Haiku,
         linux::HoloISO,
         linux::KDENeon,
+        other::KolibriOS,
     );
 
     let distros = join_futures!(futures, 2, Vec<OS>).distro_sort();
