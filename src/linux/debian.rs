@@ -445,3 +445,36 @@ impl Distro for EndlessOS {
         Some(join_futures!(futures, 3))
     }
 }
+const LMDE_MIRROR: &str = "https://mirrors.edge.kernel.org/linuxmint/debian/";
+
+pub struct Lmde;
+impl Distro for Lmde {
+    const NAME: &'static str = "lmde";
+    const PRETTY_NAME: &'static str = "Linux Mint Debian Edition";
+    const HOMEPAGE: Option<&'static str> = Some("https://linuxmint.com/download_lmde.php");
+    const DESCRIPTION: Option<&'static str> = Some("Aims to be as similar as possible to Linux Mint, but without using Ubuntu. The package base is provided by Debian instead.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let page = capture_page(LMDE_MIRROR).await?;
+        let mut checksums = ChecksumSeparation::Whitespace
+            .build(&format!("{LMDE_MIRROR}sha256sum.txt"))
+            .await;
+        let iso_regex = Regex::new(r#"href="(lmde-(\d+(?:\.\d+)?)-(\w+)-64bit.iso)""#).unwrap();
+
+        Some(
+            iso_regex
+                .captures_iter(&page)
+                .map(|c| {
+                    let iso = &c[1];
+                    let checksum = checksums.as_mut().and_then(|cs| cs.remove(&format!("*{iso}")));
+                    let url = format!("{LMDE_MIRROR}{iso}");
+                    Config {
+                        release: c[2].to_string(),
+                        edition: Some(c[3].to_string()),
+                        iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                        ..Default::default()
+                    }
+                })
+                .collect(),
+        )
+    }
+}

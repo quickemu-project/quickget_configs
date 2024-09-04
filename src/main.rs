@@ -66,6 +66,7 @@ async fn main() {
         other::KolibriOS,
         linux::LinuxLite,
         linux::LinuxMint,
+        linux::Lmde,
     );
 
     let distros = join_futures!(futures, 2, Vec<OS>).distro_sort();
