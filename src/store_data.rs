@@ -4,7 +4,7 @@ use once_cell::sync::Lazy;
 pub use quickemu::config::Arch;
 pub use quickget_core::data_structures::{ArchiveFormat, Config, Disk, Source, WebSource, OS};
 use regex::Regex;
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 pub trait Distro {
     const NAME: &'static str;
@@ -101,7 +101,7 @@ pub enum ChecksumSeparation {
     Whitespace,
     Sha256Regex,
     Md5Regex,
-    CustomRegex(Arc<Regex>, usize, usize),
+    CustomRegex(Regex, usize, usize),
 }
 
 impl ChecksumSeparation {

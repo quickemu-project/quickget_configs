@@ -6,7 +6,7 @@ use join_futures::join_futures;
 use quickemu::config::{Arch, DiskFormat};
 use quickget_core::data_structures::ArchiveFormat;
 use regex::Regex;
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 const ANTIX_MIRROR: &str = "https://sourceforge.net/projects/antix-linux/files/Final/";
 
@@ -20,7 +20,7 @@ impl Distro for Antix {
         let releases = capture_page(ANTIX_MIRROR).await?;
 
         let releases_regex = Regex::new(r#""name":"antiX-([0-9.]+)""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#""name":"(antiX-[0-9.]+(?:-runit)?(?:-[^_]+)?_x64-([^.]+).iso)".*?"download_url":"(.*?)""#).unwrap());
+        let iso_regex = Regex::new(r#""name":"(antiX-[0-9.]+(?:-runit)?(?:-[^_]+)?_x64-([^.]+).iso)".*?"download_url":"(.*?)""#).unwrap();
 
         let skip_until_sha256 = |cs_data: String| {
             cs_data
@@ -160,8 +160,8 @@ impl Distro for Debian {
         let latest_html = capture_page(LATEST_DEBIAN_MIRROR).await?;
         let previous_html = capture_page(PREVIOUS_DEBIAN_MIRROR).await?;
         let releases_regex = Regex::new(r#"href="([0-9.]+)/""#).unwrap();
-        let live_regex = Arc::new(Regex::new(">(debian-live-[0-9.]+-amd64-([^.]+).iso)<").unwrap());
-        let netinst_regex = Arc::new(Regex::new(">(debian-[0-9].+-(?:amd64|arm64)-(netinst).iso)<").unwrap());
+        let live_regex = Regex::new(">(debian-live-[0-9.]+-amd64-([^.]+).iso)<").unwrap();
+        let netinst_regex = Regex::new(">(debian-[0-9].+-(?:amd64|arm64)-(netinst).iso)<").unwrap();
 
         let latest_full_release = releases_regex.captures(&latest_html)?[1].to_string();
         let latest_release = latest_full_release.split('.').next()?.parse::<u32>().ok()?;
@@ -260,8 +260,8 @@ impl Distro for Devuan {
     async fn generate_configs() -> Option<Vec<Config>> {
         let release_html = capture_page(DEVUAN_MIRROR).await?;
         let release_regex = Regex::new(r#"href="(devuan_[a-zA-Z]+/)""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="(devuan_[a-zA-Z]+_([0-9.]+)_amd64_desktop-live.iso)""#).unwrap());
-        let checksum_url_regex = Arc::new(Regex::new(r#"href="(SHA[^.]+.txt)""#).unwrap());
+        let iso_regex = Regex::new(r#"href="(devuan_[a-zA-Z]+_([0-9.]+)_amd64_desktop-live.iso)""#).unwrap();
+        let checksum_url_regex = Regex::new(r#"href="(SHA[^.]+.txt)""#).unwrap();
 
         let futures = release_regex.captures_iter(&release_html).map(|c| {
             let mirror = DEVUAN_MIRROR.to_string() + &c[1] + "desktop-live/";
@@ -308,9 +308,9 @@ impl Distro for EasyOS {
     async fn generate_configs() -> Option<Vec<Config>> {
         let release_html = capture_page(EASYOS_MIRROR).await?;
         let release_name_regex = Regex::new(r#"href="([a-z]+/)""#).unwrap();
-        let subdirectory_regex = Arc::new(Regex::new(r#"href="([0-9]{4}/)""#).unwrap());
-        let release_regex = Arc::new(Regex::new(r#"href="([0-9](?:\.[0-9]+)+)/""#).unwrap());
-        let img_regex = Arc::new(Regex::new(r#"href="(easy-[0-9.]+-amd64.img(.gz)?)""#).unwrap());
+        let subdirectory_regex = Regex::new(r#"href="([0-9]{4}/)""#).unwrap();
+        let release_regex = Regex::new(r#"href="([0-9](?:\.[0-9]+)+)/""#).unwrap();
+        let img_regex = Regex::new(r#"href="(easy-[0-9.]+-amd64.img(.gz)?)""#).unwrap();
 
         let release_futures = release_name_regex.captures_iter(&release_html).map(|c| {
             let mirror = EASYOS_MIRROR.to_string() + &c[1];
@@ -406,8 +406,8 @@ impl Distro for EndlessOS {
     async fn generate_configs() -> Option<Vec<Config>> {
         let release_html = capture_page(ENDLESS_DATA_MIRROR).await?;
         let release_regex = Regex::new(r#"href="(\d+(?:.\d+){2})\/""#).unwrap();
-        let edition_regex = Arc::new(Regex::new(r#"href="([^./]+)"#).unwrap());
-        let iso_regex = Arc::new(Regex::new(r#"href="(eos-eos[\d.]+-amd64-amd64.[-\d]+.[^.]+.iso)""#).unwrap());
+        let edition_regex = Regex::new(r#"href="([^./]+)"#).unwrap();
+        let iso_regex = Regex::new(r#"href="(eos-eos[\d.]+-amd64-amd64.[-\d]+.[^.]+.iso)""#).unwrap();
 
         let futures = release_regex.captures_iter(&release_html).map(|c| {
             let release = c[1].to_string();
@@ -445,6 +445,18 @@ impl Distro for EndlessOS {
         Some(join_futures!(futures, 3))
     }
 }
+
+pub struct Kali;
+impl Distro for Kali {
+    const NAME: &'static str = "kali";
+    const PRETTY_NAME: &'static str = "Kali Linux";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.kali.org/");
+    const DESCRIPTION: Option<&'static str> = Some("The most advanced Penetration Testing Distribution.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        todo!()
+    }
+}
+
 const LMDE_MIRROR: &str = "https://mirrors.edge.kernel.org/linuxmint/debian/";
 
 pub struct Lmde;

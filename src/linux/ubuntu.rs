@@ -8,7 +8,6 @@ use quickemu::config::Arch;
 use quickget_core::data_structures::ArchiveFormat;
 use regex::Regex;
 use serde::Deserialize;
-use std::sync::Arc;
 use tokio::runtime::Runtime;
 
 const LAUNCHPAD_RELEASES_URL: &str = "https://api.launchpad.net/devel/ubuntu/series";
@@ -324,7 +323,7 @@ impl Distro for Bodhi {
     async fn generate_configs() -> Option<Vec<Config>> {
         let page = capture_page(BODHI_MIRROR).await?;
         let release_regex = Regex::new(r#""name":"([0-9]+.[0-9]+.[0-9]+)""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#""name":"(bodhi-[0-9]+.[0-9]+.[0-9]+-64(-[^-.]+)?.iso)""#).unwrap());
+        let iso_regex = Regex::new(r#""name":"(bodhi-[0-9]+.[0-9]+.[0-9]+-64(-[^-.]+)?.iso)""#).unwrap();
 
         let futures = release_regex.captures_iter(&page).take(3).map(|c| {
             let release = c[1].to_string();

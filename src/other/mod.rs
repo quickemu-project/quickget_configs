@@ -5,7 +5,6 @@ use join_futures::join_futures;
 use quickemu::config::GuestOS;
 use regex::Regex;
 use std::str::FromStr;
-use std::sync::Arc;
 
 const FREEDOS_MIRROR: &str = "https://www.ibiblio.org/pub/micro/pc-stuff/freedos/files/distributions/";
 
@@ -18,8 +17,8 @@ impl Distro for FreeDOS {
     async fn generate_configs() -> Option<Vec<Config>> {
         let release_html = capture_page(FREEDOS_MIRROR).await?;
         let release_regex = Regex::new(r#"href="(\d+\.\d+)/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="(FD\d+-?(.*?CD)\.(iso|zip))""#).unwrap());
-        let checksum_regex = Arc::new(Regex::new(r#"FD\d+.sha|verify.txt"#).unwrap());
+        let iso_regex = Regex::new(r#"href="(FD\d+-?(.*?CD)\.(iso|zip))""#).unwrap();
+        let checksum_regex = Regex::new(r#"FD\d+.sha|verify.txt"#).unwrap();
 
         let futures = release_regex.captures_iter(&release_html).map(|c| {
             let release = c[1].to_string();

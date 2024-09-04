@@ -3,7 +3,6 @@ use crate::utils::capture_page;
 use join_futures::join_futures;
 use quickemu::config::{Arch, GuestOS};
 use regex::Regex;
-use std::sync::Arc;
 
 const FREEBSD_X86_64_RELEASES: &str = "https://download.freebsd.org/ftp/releases/amd64/amd64/";
 const FREEBSD_AARCH64_RELEASES: &str = "https://download.freebsd.org/ftp/releases/arm64/aarch64/";
@@ -17,7 +16,7 @@ impl Distro for FreeBSD {
     const HOMEPAGE: Option<&'static str> = Some("https://www.freebsd.org/");
     const DESCRIPTION: Option<&'static str> = Some("Operating system used to power modern servers, desktops, and embedded platforms.");
     async fn generate_configs() -> Option<Vec<Config>> {
-        let freebsd_regex = Arc::new(Regex::new(r#"href="([0-9\.]+)-RELEASE"#).unwrap());
+        let freebsd_regex = Regex::new(r#"href="([0-9\.]+)-RELEASE"#).unwrap();
         let futures = [
             (FREEBSD_X86_64_RELEASES, "amd64", Arch::x86_64),
             (FREEBSD_AARCH64_RELEASES, "arm64-aarch64", Arch::aarch64),
@@ -157,7 +156,7 @@ impl Distro for GhostBSD {
     async fn generate_configs() -> Option<Vec<Config>> {
         let release_html = capture_page(GHOSTBSD_MIRROR).await?;
         let release_regex = Regex::new(r#"href="(latest|[\d\.]+)\/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="(GhostBSD-[\d\.]+(-[\w]+)?.iso)""#).unwrap());
+        let iso_regex = Regex::new(r#"href="(GhostBSD-[\d\.]+(-[\w]+)?.iso)""#).unwrap();
 
         let mut releases = release_regex
             .captures_iter(&release_html)

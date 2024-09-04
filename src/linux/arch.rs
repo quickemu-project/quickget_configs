@@ -7,7 +7,6 @@ use crate::{
 use join_futures::join_futures;
 use regex::Regex;
 use serde::Deserialize;
-use std::sync::Arc;
 
 const ARCHCRAFT_MIRROR: &str = "https://sourceforge.net/projects/archcraft/files/";
 
@@ -20,7 +19,7 @@ impl Distro for Archcraft {
     async fn generate_configs() -> Option<Vec<Config>> {
         let releases = capture_page(ARCHCRAFT_MIRROR).await?;
         let releases_regex = Regex::new(r#""name":"v([^"]+)""#).unwrap();
-        let url_regex = Arc::new(Regex::new(r#""name":"archcraft-.*?-x86_64.iso".*?"download_url":"([^"]+)".*?"name":"archcraft-.*?-x86_64.iso.sha256sum".*?"download_url":"([^"]+)""#).unwrap());
+        let url_regex = Regex::new(r#""name":"archcraft-.*?-x86_64.iso".*?"download_url":"([^"]+)".*?"name":"archcraft-.*?-x86_64.iso.sha256sum".*?"download_url":"([^"]+)""#).unwrap();
         let futures = releases_regex.captures_iter(&releases).take(3).map(|c| {
             let release = c[1].to_string();
             let mirror = format!("{ARCHCRAFT_MIRROR}v{release}/");
@@ -100,8 +99,8 @@ impl Distro for ArcoLinux {
     async fn generate_configs() -> Option<Vec<Config>> {
         let releases = capture_page(ARCOLINUX_MIRROR).await?;
         let release_regex = Regex::new(r#">(v[0-9.]+)/</a"#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#">(arco([^-]+)-[v0-9.]+-x86_64.iso)</a>"#).unwrap());
-        let checksum_regex = Arc::new(Regex::new(r#">(arco([^-]+)-[v0-9.]+-x86_64.iso.sha256)</a>"#).unwrap());
+        let iso_regex = Regex::new(r#">(arco([^-]+)-[v0-9.]+-x86_64.iso)</a>"#).unwrap();
+        let checksum_regex = Regex::new(r#">(arco([^-]+)-[v0-9.]+-x86_64.iso.sha256)</a>"#).unwrap();
 
         let mut releases = release_regex.captures_iter(&releases).collect::<Vec<_>>();
         releases.reverse();
@@ -258,7 +257,7 @@ impl Distro for CachyOS {
     async fn generate_configs() -> Option<Vec<Config>> {
         let page = capture_page(CACHYOS_KDE_MIRROR).await?;
         let release_regex = Regex::new(r#"href="([0-9]+)/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="(cachyos-([^-]+)-linux-[0-9]+.iso)""#).unwrap());
+        let iso_regex = Regex::new(r#"href="(cachyos-([^-]+)-linux-[0-9]+.iso)""#).unwrap();
 
         let futures = release_regex.captures_iter(&page).map(|c| {
             let release = c[1].to_string();
@@ -335,7 +334,7 @@ impl Distro for Garuda {
     async fn generate_configs() -> Option<Vec<Config>> {
         let edition_html = capture_page(GARUDA_MIRROR).await?;
         let edition_regex = Regex::new(r#"href="([^.]+)\/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="([^"]+.iso)""#).unwrap());
+        let iso_regex = Regex::new(r#"href="([^"]+.iso)""#).unwrap();
 
         let futures = edition_regex.captures_iter(&edition_html).map(|c| {
             let edition = c[1].to_string();

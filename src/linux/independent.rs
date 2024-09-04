@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     store_data::{ArchiveFormat, ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::{arch_from_str, capture_page},
@@ -99,7 +97,7 @@ impl Distro for Alpine {
     async fn generate_configs() -> Option<Vec<Config>> {
         let releases = capture_page(ALPINE_MIRROR).await?;
         let releases_regex = Regex::new(r#"<a href="(v[0-9]+\.[0-9]+)/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"(?s)iso: (alpine-virt-[0-9]+\.[0-9]+.*?.iso).*? sha256: ([0-9a-f]+)"#).unwrap());
+        let iso_regex = Regex::new(r#"(?s)iso: (alpine-virt-[0-9]+\.[0-9]+.*?.iso).*? sha256: ([0-9a-f]+)"#).unwrap();
 
         let futures = releases_regex.captures_iter(&releases).flat_map(|r| {
             let release = r[1].to_string();
@@ -140,7 +138,7 @@ impl Distro for Batocera {
     async fn generate_configs() -> Option<Vec<Config>> {
         let release_data = capture_page(BATOCERA_MIRROR).await?;
         let batocera_regex = Regex::new(r#"<a href="([0-9]{2})/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"<a href="(batocera-x86_64.*?.img.gz)"#).unwrap());
+        let iso_regex = Regex::new(r#"<a href="(batocera-x86_64.*?.img.gz)"#).unwrap();
 
         let mut releases = batocera_regex
             .captures_iter(&release_data)
@@ -183,7 +181,7 @@ impl Distro for ChimeraLinux {
     async fn generate_configs() -> Option<Vec<Config>> {
         let releases = capture_page(CHIMERA_MIRROR).await?;
         let release_regex = Regex::new(r#"href="([0-9]{8})/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="(chimera-linux-(x86_64|aarch64|riscv64)-LIVE-[0-9]{8}-([^-]+).iso)""#).unwrap());
+        let iso_regex = Regex::new(r#"href="(chimera-linux-(x86_64|aarch64|riscv64)-LIVE-[0-9]{8}-([^-]+).iso)""#).unwrap();
 
         let releases = {
             let mut releases = release_regex
@@ -241,7 +239,7 @@ impl Distro for Gentoo {
     const HOMEPAGE: Option<&'static str> = Some("https://www.gentoo.org/");
     const DESCRIPTION: Option<&'static str> = Some("Highly flexible, source-based Linux distribution.");
     async fn generate_configs() -> Option<Vec<Config>> {
-        let iso_regex = Arc::new(Regex::new(r#"\d{8}T\d{6}Z\/(admincd|install|livegui).*?.iso"#).unwrap());
+        let iso_regex = Regex::new(r#"\d{8}T\d{6}Z\/(admincd|install|livegui).*?.iso"#).unwrap();
         let futures = [(Arch::x86_64, "amd64"), (Arch::aarch64, "arm64")]
             .into_iter()
             .map(|(arch, arch_str)| {
@@ -295,7 +293,7 @@ impl Distro for GnomeOS {
     async fn generate_configs() -> Option<Vec<Config>> {
         let release_html = capture_page(GNOMEOS_MIRROR).await?;
         let release_regex = Regex::new(r#"href="(\d[^/]+)\/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="(gnome_os.*?.iso)""#).unwrap());
+        let iso_regex = Regex::new(r#"href="(gnome_os.*?.iso)""#).unwrap();
 
         let mut releases = release_regex
             .captures_iter(&release_html)

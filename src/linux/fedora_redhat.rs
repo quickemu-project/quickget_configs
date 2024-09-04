@@ -6,7 +6,6 @@ use join_futures::join_futures;
 use quickemu::config::DiskFormat;
 use quickget_core::data_structures::{ArchiveFormat, Disk};
 use regex::Regex;
-use std::sync::Arc;
 
 const ALMA_MIRROR: &str = "https://repo.almalinux.org/almalinux/";
 
@@ -20,7 +19,7 @@ impl Distro for Alma {
         let releases = capture_page(ALMA_MIRROR).await?;
 
         let releases_regex = Regex::new(r#"<a href="([0-9]+)/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"<a href="(AlmaLinux-[0-9]+-latest-(?:x86_64|aarch64)-([^-]+).iso)">"#).unwrap());
+        let iso_regex = Regex::new(r#"<a href="(AlmaLinux-[0-9]+-latest-(?:x86_64|aarch64)-([^-]+).iso)">"#).unwrap();
 
         let futures = releases_regex.captures_iter(&releases).flat_map(|c| {
             let release = c[1].to_string();
@@ -123,7 +122,7 @@ impl Distro for CentOSStream {
     async fn generate_configs() -> Option<Vec<Config>> {
         let releases = capture_page(CENTOS_MIRROR).await?;
         let release_regex = Regex::new(r#"href="([0-9]+)-stream/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="(CentOS-Stream-[0-9]+-[0-9]{8}.0-[^-]+-([^-]+)\.iso)""#).unwrap());
+        let iso_regex = Regex::new(r#"href="(CentOS-Stream-[0-9]+-[0-9]{8}.0-[^-]+-([^-]+)\.iso)""#).unwrap();
 
         let futures = release_regex
             .captures_iter(&releases)
