@@ -23,55 +23,50 @@ impl Distro for NixOS {
         let standard_release = Regex::new(r#"nixos-(([0-9]+.[0-9]+|(unstable))(?:-small)?)"#).unwrap();
         let iso_regex = Regex::new(r#"latest-nixos-([^-]+)-([^-]+)-linux.iso"#).unwrap();
 
-        let releases: Vec<String> = releases
+        let releases = releases
             .contents
-            .into_iter()
-            .map(|r| r.key)
-            .filter(|r| standard_release.is_match(r))
-            .rev()
-            .take(6)
-            .map(|r| standard_release.captures(&r).unwrap().get(1).unwrap().as_str().to_string())
-            .collect();
-        let mut futures = Vec::new();
-        for release in releases {
-            if let Some(page) = capture_page(&format!("{NIX_URL}&prefix=nixos-{release}/"))
-                .await
-                .and_then(|p| quick_xml::de::from_str::<NixReleases>(&p).ok())
-            {
-                let page = page
-                    .contents
-                    .into_iter()
-                    .map(|r| r.key)
-                    .filter(|r| iso_regex.is_match(r) && r.ends_with(".iso"))
-                    .collect::<Vec<String>>();
+            .iter()
+            .map(|r| &r.key)
+            .filter_map(|r| standard_release.captures(r))
+            .map(|c| c[1].to_string());
 
-                futures.append(
-                    &mut page
-                        .into_iter()
-                        .map(|page| {
-                            let release = release.clone();
-                            let (name, [edition, arch]) = iso_regex.captures(&page).unwrap().extract();
-                            let edition = edition.to_string();
-                            let arch = arch_from_str(arch);
-                            let url = format!("{NIX_DOWNLOAD_URL}/nixos-{release}/{name}");
-                            async move {
-                                let hash = capture_page(&format!("{url}.sha256"))
-                                    .await
-                                    .map(|h| h.split_whitespace().next().unwrap().to_string());
-                                Some(Config {
-                                    release,
-                                    edition: Some(edition),
-                                    arch: arch?,
-                                    iso: Some(vec![Source::Web(WebSource::new(url, hash, None, None))]),
-                                    ..Default::default()
-                                })
-                            }
+        let futures = releases.rev().take(6).map(|release| {
+            let iso_regex = iso_regex.clone();
+            async move {
+                let page = capture_page(&format!("{NIX_URL}&prefix=nixos-{release}/")).await?;
+                let page: NixReleases = quick_xml::de::from_str(&page).ok()?;
+
+                let iso_keys = page.contents.iter().map(|r| &r.key).filter(|r| r.ends_with(".iso"));
+                let isos = iso_keys
+                    .filter_map(|r| iso_regex.captures(r))
+                    .map(|c| c.extract())
+                    .filter_map(|(name, [edition, arch])| {
+                        let url = format!("{NIX_DOWNLOAD_URL}/nixos-{release}/{name}");
+                        let edition = edition.to_string();
+                        let arch = arch_from_str(arch)?;
+                        Some((url, edition, arch))
+                    });
+
+                let futures = isos.map(|(url, edition, arch)| {
+                    let release = release.clone();
+                    async move {
+                        let hash = capture_page(&format!("{url}.sha256"))
+                            .await
+                            .map(|h| h.split_whitespace().next().unwrap().to_string());
+                        Some(Config {
+                            release,
+                            edition: Some(edition),
+                            arch,
+                            iso: Some(vec![Source::Web(WebSource::new(url, hash, None, None))]),
+                            ..Default::default()
                         })
-                        .collect(),
-                );
-            };
-        }
-        Some(join_futures!(futures, 1))
+                    }
+                });
+                Some(join_futures!(futures, 1))
+            }
+        });
+
+        Some(join_futures!(futures, 2))
     }
 }
 
