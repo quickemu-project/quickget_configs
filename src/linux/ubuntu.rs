@@ -8,6 +8,7 @@ use quickemu::config::Arch;
 use quickget_core::data_structures::ArchiveFormat;
 use regex::Regex;
 use serde::Deserialize;
+use std::fmt::Display;
 use tokio::runtime::Runtime;
 
 const LAUNCHPAD_RELEASES_URL: &str = "https://api.launchpad.net/devel/ubuntu/series";
@@ -161,14 +162,14 @@ async fn get_ubuntu_releases(variant: UbuntuVariant) -> Option<Vec<Config>> {
                 };
                 let mut release = release.clone();
                 let url = match (release.as_str(), &variant, &arch) {
-                    ("daily-live", ..) => format!("https://cdimage.ubuntu.com/{}/{release}/current/", variant.as_ref()),
+                    ("daily-live", ..) => format!("https://cdimage.ubuntu.com/{variant}/{release}/current/"),
                     ("22.04", UbuntuVariant::Ubuntu, Arch::aarch64) => {
                         release += "-daily";
                         "https://cdimage.ubuntu.com/jammy/daily-live/current/".into()
                     }
                     (_, UbuntuVariant::Ubuntu | UbuntuVariant::UbuntuServer, Arch::x86_64) => format!("https://releases.ubuntu.com/{release}/"),
                     (_, UbuntuVariant::UbuntuServer, _) => format!("https://cdimage.ubuntu.com/releases/{release}/release/"),
-                    _ => format!("https://cdimage.ubuntu.com/{}/releases/{release}/release/", variant.as_ref()),
+                    _ => format!("https://cdimage.ubuntu.com/{variant}/releases/{release}/release/"),
                 };
 
                 let sku = match variant {
@@ -177,28 +178,22 @@ async fn get_ubuntu_releases(variant: UbuntuVariant) -> Option<Vec<Config>> {
                     _ => "desktop",
                 };
                 async move {
-                    let text = match capture_page(&format!("{}SHA256SUMS", url)).await {
+                    let text = match capture_page(&format!("{url}SHA256SUMS")).await {
                         Some(text) => text,
-                        None => capture_page(&format!("{}MD5SUMS", url)).await?,
+                        None => capture_page(&format!("{url}MD5SUMS")).await?,
                     };
 
                     let line = text.lines().find(|l| l.contains(arch_text) && l.contains(sku))?;
                     let checksum = line.split_whitespace().next().map(ToString::to_string);
                     let iso = format!("{url}{}", line.split('*').nth(1)?);
 
-                    Some(match arch {
-                        Arch::riscv64 => Config {
-                            img: Some(vec![Source::Web(WebSource::new(iso, checksum, Some(ArchiveFormat::Gz), None))]),
-                            release,
-                            arch,
-                            ..Default::default()
-                        },
-                        _ => Config {
-                            iso: Some(vec![Source::Web(WebSource::new(iso, checksum, None, None))]),
-                            release,
-                            arch,
-                            ..Default::default()
-                        },
+                    let archive_format = (arch == Arch::riscv64).then_some(ArchiveFormat::Gz);
+
+                    Some(Config {
+                        img: Some(vec![Source::Web(WebSource::new(iso, checksum, archive_format, None))]),
+                        release,
+                        arch,
+                        ..Default::default()
                     })
                 }
             })
@@ -244,9 +239,10 @@ enum UbuntuVariant {
     UbuntuCinnamon,
 }
 
-impl AsRef<str> for UbuntuVariant {
-    fn as_ref(&self) -> &str {
-        match self {
+// This implementation of display is used for URL creation. It is not user facing.
+impl Display for UbuntuVariant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let text = match self {
             UbuntuVariant::Ubuntu => "ubuntu",
             UbuntuVariant::UbuntuServer => "ubuntu-server",
             UbuntuVariant::UbuntuUnity => "ubuntu-unity",
@@ -259,7 +255,8 @@ impl AsRef<str> for UbuntuVariant {
             UbuntuVariant::Edubuntu => "edubuntu",
             UbuntuVariant::Xubuntu => "xubuntu",
             UbuntuVariant::UbuntuCinnamon => "ubuntucinnamon",
-        }
+        };
+        write!(f, "{text}")
     }
 }
 
