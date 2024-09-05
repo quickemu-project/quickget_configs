@@ -19,11 +19,10 @@ impl Distro for BigLinux {
         let data = capture_page(BIGLINUX_MIRROR).await?;
         let biglinux_regex = Regex::new(r#"<a href="(biglinux_([0-9]{4}(?:-[0-9]{2}){2})_(.*?).iso)""#).unwrap();
 
-        let mut data = biglinux_regex.captures_iter(&data).collect::<Vec<_>>();
-        data.sort_unstable_by_key(|c| c[2].to_string());
-        data.reverse();
+        let mut data = biglinux_regex.captures_iter(&data).map(|c| c.extract()).collect::<Vec<_>>();
+        data.sort_unstable_by_key(|(_, [release, _])| *release);
 
-        let futures = data.into_iter().map(|c| c.extract()).map(|(_, [iso, release, edition])| {
+        let futures = data.into_iter().rev().map(|(iso, [release, edition])| {
             let url = BIGLINUX_MIRROR.to_string() + iso;
             let checksum_url = url.clone() + ".md5";
             async move {

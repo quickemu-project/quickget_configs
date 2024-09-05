@@ -342,29 +342,9 @@ impl Distro for EasyOS {
         });
         let mut releases = join_futures!(release_futures, 4, Vec<(String, String)>);
 
-        releases.sort_by(|(a, _), (b, _)| {
-            if let (Ok(a), Ok(b)) = (
-                a.split('.').take(2).collect::<Vec<&str>>().join(".").parse::<f64>(),
-                b.split('.').take(2).collect::<Vec<&str>>().join(".").parse::<f64>(),
-            ) {
-                a.partial_cmp(&b).unwrap()
-            } else {
-                std::cmp::Ordering::Equal
-            }
-        });
+        releases.sort_by_key(|(release, _)| release.split('.').take(2).collect::<String>().parse::<u32>().ok());
         releases.reverse();
-
-        releases.dedup_by(|(a, _), (b, _)| {
-            if let (Ok(a), Ok(b)) = (
-                a.split('.').take(2).collect::<String>().parse::<u32>(),
-                b.split('.').take(2).collect::<String>().parse::<u32>(),
-            ) {
-                a == b
-            } else {
-                true
-            }
-        });
-        println!("{:?}", releases);
+        releases.dedup_by_key(|(release, _)| release.split('.').take(2).collect::<String>().parse::<u32>());
 
         let futures = releases.into_iter().take(5).map(|(release, mirror)| {
             let img_regex = img_regex.clone();

@@ -102,13 +102,12 @@ impl Distro for ArcoLinux {
         let iso_regex = Regex::new(r#">(arco([^-]+)-[v0-9.]+-x86_64.iso)</a>"#).unwrap();
         let checksum_regex = Regex::new(r#">(arco([^-]+)-[v0-9.]+-x86_64.iso.sha256)</a>"#).unwrap();
 
-        let mut releases = release_regex.captures_iter(&releases).collect::<Vec<_>>();
-        releases.reverse();
+        let releases: Vec<String> = release_regex.captures_iter(&releases).map(|c| c[1].to_string()).collect();
         let futures = releases
             .into_iter()
+            .rev()
             .take(3)
-            .map(|c| {
-                let release = c[1].to_string();
+            .map(|release| {
                 let mirror = format!("{ARCOLINUX_MIRROR}{release}/");
                 let iso_regex = iso_regex.clone();
                 let checksums = ChecksumSeparation::CustomRegex(checksum_regex.clone(), 2, 1);
@@ -166,15 +165,13 @@ impl Distro for ArtixLinux {
 
         iso_regex
             .captures_iter(&page)
-            .map(|c| {
-                let iso = c[1].to_string();
-                let edition = c[2].to_string();
-                let release = c[3].to_string();
+            .map(|c| c.extract())
+            .map(|(_, [iso, edition, release])| {
                 let download_url = format!("{ARTIX_MIRROR}{iso}");
-                let checksum = checksums.as_ref().and_then(|cs| cs.get(&iso)).map(ToString::to_string);
+                let checksum = checksums.as_ref().and_then(|cs| cs.get(iso)).map(ToString::to_string);
                 Config {
-                    release,
-                    edition: Some(edition),
+                    release: release.to_string(),
+                    edition: Some(edition.to_string()),
                     iso: Some(vec![Source::Web(WebSource::new(download_url, checksum, None, None))]),
                     ..Default::default()
                 }

@@ -111,32 +111,25 @@ impl Distro for DragonFlyBSD {
             .build(&(DRAGONFLYBSD_MIRROR.to_string() + "md5.txt"))
             .await;
 
-        let mut releases = iso_regex.captures_iter(&mirror_html).collect::<Vec<_>>();
+        let mut releases = iso_regex
+            .captures_iter(&mirror_html)
+            .map(|c| c.extract())
+            .map(|(_, [iso, release])| (iso, release))
+            .collect::<Vec<_>>();
         // Remove duplicate versions, ignoring patch releases
-        releases.dedup_by(|a, b| {
-            if let (Ok(a), Ok(b)) = (
-                a[2].split('.').take(2).collect::<String>().parse::<u32>(),
-                b[2].split('.').take(2).collect::<String>().parse::<u32>(),
-            ) {
-                a == b
-            } else {
-                true
-            }
-        });
+        releases.dedup_by_key(|(_, release)| release.split('.').take(2).collect::<String>().parse::<u32>());
 
         releases
             .into_iter()
             .take(4)
-            .map(|c| {
-                let iso = &c[1];
-                let release = c[2].to_string();
+            .map(|(iso, release)| {
                 let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                 let url = DRAGONFLYBSD_MIRROR.to_string() + iso;
 
                 Config {
                     guest_os: GuestOS::DragonFlyBSD,
                     iso: Some(vec![Source::Web(WebSource::new(url, checksum, Some(ArchiveFormat::Bz2), None))]),
-                    release,
+                    release: release.to_string(),
                     ..Default::default()
                 }
             })
@@ -158,13 +151,12 @@ impl Distro for GhostBSD {
         let release_regex = Regex::new(r#"href="(latest|[\d\.]+)\/""#).unwrap();
         let iso_regex = Regex::new(r#"href="(GhostBSD-[\d\.]+(-[\w]+)?.iso)""#).unwrap();
 
-        let mut releases = release_regex
+        let releases = release_regex
             .captures_iter(&release_html)
             .map(|r| (r[1].to_string(), format!("{GHOSTBSD_MIRROR}{}/", &r[1])))
             .collect::<Vec<_>>();
-        releases.reverse();
 
-        let futures = releases.into_iter().take(4).map(|(release, mirror)| {
+        let futures = releases.into_iter().rev().take(4).map(|(release, mirror)| {
             let iso_regex = iso_regex.clone();
 
             async move {

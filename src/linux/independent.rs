@@ -140,10 +140,10 @@ impl Distro for Batocera {
             .map(|r| r[1].parse::<u32>().unwrap())
             .collect::<Vec<u32>>();
         releases.sort_unstable();
-        releases.reverse();
 
         let futures = releases
             .into_iter()
+            .rev()
             .take(3)
             .map(|release| {
                 let iso_regex = iso_regex.clone();
@@ -184,8 +184,7 @@ impl Distro for ChimeraLinux {
                 .map(|c| c[1].parse::<u32>().unwrap())
                 .collect::<Vec<u32>>();
             releases.sort_unstable();
-            releases.reverse();
-            let mut releases = releases.iter().map(ToString::to_string).collect::<Vec<String>>();
+            let mut releases = releases.iter().rev().map(ToString::to_string).collect::<Vec<String>>();
             if let Some(r) = releases.get_mut(0) {
                 *r = "latest".to_string();
             }
@@ -290,13 +289,12 @@ impl Distro for GnomeOS {
         let release_regex = Regex::new(r#"href="(\d[^/]+)\/""#).unwrap();
         let iso_regex = Regex::new(r#"href="(gnome_os.*?.iso)""#).unwrap();
 
-        let mut releases = release_regex
+        let releases = release_regex
             .captures_iter(&release_html)
             .map(|r| (r[1].to_string(), format!("{GNOMEOS_MIRROR}{}/", &r[1])))
             .collect::<Vec<_>>();
-        releases.reverse();
 
-        let futures = releases.into_iter().take(6).map(|(release, mirror)| {
+        let futures = releases.into_iter().rev().take(6).map(|(release, mirror)| {
             let iso_regex = iso_regex.clone();
             async move {
                 let page = capture_page(&mirror).await?;
