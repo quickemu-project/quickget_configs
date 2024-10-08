@@ -35,8 +35,8 @@ pub async fn capture_page(input: &str) -> Option<String> {
     output
 }
 
-pub async fn all_valid(urls: Vec<String>) -> bool {
-    let futures = urls.into_iter().map(|input| async move {
+pub async fn all_valid(urls: impl Iterator<Item = &str>) -> bool {
+    let futures = urls.map(|input| async move {
         let url: Url = input.parse().ok()?;
         let url_permit = match CLIENT.url_permits.get(url.host_str()?) {
             Some(semaphore) => Some(semaphore.acquire().await.ok()?),

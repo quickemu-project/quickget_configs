@@ -31,14 +31,11 @@ impl<T: Distro + Send> ToOS for T {
             return None;
         }
         let futures = releases.iter().map(|r| {
-            let urls = [
-                filter_web_sources(r.iso.as_deref()),
-                filter_web_sources(r.img.as_deref()),
-                filter_web_sources(r.fixed_iso.as_deref()),
-                filter_web_sources(r.floppy.as_deref()),
-                extract_disk_urls(r.disk_images.as_deref()),
-            ]
-            .concat();
+            let urls = [&r.iso, &r.img, &r.fixed_iso, &r.floppy]
+                .into_iter()
+                .flatten()
+                .flat_map(filter_web_sources)
+                .chain(extract_disk_urls(r.disk_images.as_deref()));
             async move { all_valid(urls).await }
         });
         let results = join_futures!(futures);
@@ -71,27 +68,21 @@ impl<T: Distro + Send> ToOS for T {
     }
 }
 
-pub fn filter_web_sources(sources: Option<&[Source]>) -> Vec<String> {
-    sources
-        .unwrap_or(&[])
-        .iter()
-        .filter_map(|s| match s {
-            Source::Web(w) => Some(w.url.clone()),
-            _ => None,
-        })
-        .collect()
+pub fn filter_web_sources<'a, S>(sources: S) -> impl Iterator<Item = &'a str>
+where
+    S: IntoIterator<Item = &'a Source>,
+{
+    sources.into_iter().filter_map(|s| match s {
+        Source::Web(w) => Some(w.url.as_str()),
+        _ => None,
+    })
 }
 
-pub fn extract_disk_urls(sources: Option<&[Disk]>) -> Vec<String> {
-    sources
-        .unwrap_or(&[])
-        .iter()
-        .map(|d| &d.source)
-        .filter_map(|s| match s {
-            Source::Web(w) => Some(w.url.clone()),
-            _ => None,
-        })
-        .collect()
+pub fn extract_disk_urls(disks: Option<&[Disk]>) -> impl Iterator<Item = &str> {
+    disks
+        .into_iter()
+        .map(|disks| disks.iter().map(|d| &d.source))
+        .flat_map(filter_web_sources)
 }
 
 pub static DEFAULT_SHA256_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r#"SHA256 \(([^)]+)\) = ([0-9a-f]+)"#).unwrap());
