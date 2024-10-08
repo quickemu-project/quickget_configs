@@ -53,14 +53,14 @@ impl Distro for Antix {
                 Some(
                     main_releases
                         .chain(runit_releases)
-                        .map(|(c, ending)| {
-                            let checksum = checksums.remove(&c[1]);
-                            let edition = c[2].to_string() + ending;
-                            let url = c[3].to_string();
+                        .map(|(c, ending)| (c.extract(), ending))
+                        .map(|((_, [iso, edition, url]), ending)| {
+                            let checksum = checksums.remove(iso);
+                            let edition = edition.to_string() + ending;
                             Config {
                                 release: release.to_string(),
                                 edition: Some(edition),
-                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                iso: Some(vec![Source::Web(WebSource::new(url.to_string(), checksum, None, None))]),
                                 ..Default::default()
                             }
                         })
@@ -278,13 +278,12 @@ impl Distro for Devuan {
                 Some(
                     iso_regex
                         .captures_iter(&page_data)
-                        .map(|c| {
-                            let release = c[2].to_string();
-                            let iso = &c[1];
+                        .map(|c| c.extract())
+                        .map(|(_, [iso, release])| {
                             let url = mirror.clone() + iso;
                             let checksum = checksums.as_mut().and_then(|cs| cs.remove(iso));
                             Config {
-                                release,
+                                release: release.to_string(),
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                 ..Default::default()
                             }

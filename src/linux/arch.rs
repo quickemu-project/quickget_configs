@@ -103,50 +103,40 @@ impl Distro for ArcoLinux {
         let iso_regex = Arc::new(Regex::new(r#">(arco([^-]+)-[v0-9.]+-x86_64.iso)</a>"#).unwrap());
         let checksum_regex = Arc::new(Regex::new(r#">(arco([^-]+)-[v0-9.]+-x86_64.iso.sha256)</a>"#).unwrap());
 
-        let mut releases = release_regex.captures_iter(&releases).collect::<Vec<_>>();
-        releases.reverse();
-        let futures = releases
-            .into_iter()
-            .take(3)
-            .map(|c| {
-                let release = c[1].to_string();
-                let mirror = format!("{ARCOLINUX_MIRROR}{release}/");
-                let iso_regex = iso_regex.clone();
-                let checksums = ChecksumSeparation::CustomRegex(checksum_regex.clone(), 2, 1);
-                async move {
-                    let page = capture_page(&mirror).await?;
-                    let checksums = checksums.build_with_data(&page);
+        let releases: Vec<String> = release_regex.captures_iter(&releases).map(|c| c[1].to_string()).collect();
+        let futures = releases.into_iter().rev().take(3).map(|release| {
+            let mirror = format!("{ARCOLINUX_MIRROR}{release}/");
+            let iso_regex = iso_regex.clone();
+            let checksums = ChecksumSeparation::CustomRegex(checksum_regex.clone(), 2, 1);
+            async move {
+                let page = capture_page(&mirror).await?;
+                let checksums = checksums.build_with_data(&page);
 
-                    let futures = iso_regex
-                        .captures_iter(&page)
-                        .filter(|i| !i[2].contains("linux"))
-                        .map(|i| {
-                            let iso = i[1].to_string();
-                            let edition = i[2].to_string();
-                            let download_url = format!("{mirror}{iso}");
-                            let checksum_url = checksums.get(edition.as_str()).map(|c| format!("{mirror}{c}"));
-                            let release = release.clone();
-                            async move {
-                                let checksum = if let Some(checksum_url) = checksum_url {
-                                    capture_page(&checksum_url)
-                                        .await
-                                        .and_then(|c| c.split_whitespace().next().map(ToString::to_string))
-                                } else {
-                                    None
-                                };
-                                Config {
-                                    release,
-                                    edition: Some(edition),
-                                    iso: Some(vec![Source::Web(WebSource::new(download_url, checksum, None, None))]),
-                                    ..Default::default()
-                                }
-                            }
-                        })
-                        .collect::<Vec<_>>();
-                    Some(join_futures!(futures))
-                }
-            })
-            .collect::<Vec<_>>();
+                let futures = iso_regex.captures_iter(&page).filter(|i| !i[2].contains("linux")).map(|i| {
+                    let iso = i[1].to_string();
+                    let edition = i[2].to_string();
+                    let download_url = format!("{mirror}{iso}");
+                    let checksum_url = checksums.get(edition.as_str()).map(|c| format!("{mirror}{c}"));
+                    let release = release.clone();
+                    async move {
+                        let checksum = if let Some(checksum_url) = checksum_url {
+                            capture_page(&checksum_url)
+                                .await
+                                .and_then(|c| c.split_whitespace().next().map(ToString::to_string))
+                        } else {
+                            None
+                        };
+                        Config {
+                            release,
+                            edition: Some(edition),
+                            iso: Some(vec![Source::Web(WebSource::new(download_url, checksum, None, None))]),
+                            ..Default::default()
+                        }
+                    }
+                });
+                Some(join_futures!(futures))
+            }
+        });
         Some(join_futures!(futures, 2))
     }
 }
@@ -268,9 +258,9 @@ impl Distro for CachyOS {
                 let page = capture_page(&mirror).await?;
                 let futures = iso_regex
                     .captures_iter(&page)
-                    .map(|c| {
-                        let edition = c[2].to_string();
-                        let url = format!("{mirror}{}", &c[1]);
+                    .map(|c| c.extract())
+                    .map(|(_, [iso, edition])| {
+                        let url = format!("{mirror}{iso}");
                         let checksum_url = url.clone() + ".sha256";
                         let release = release.clone();
                         async move {
@@ -279,7 +269,7 @@ impl Distro for CachyOS {
                                 .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
                             Config {
                                 release,
-                                edition: Some(edition),
+                                edition: Some(edition.to_string()),
                                 iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
                                 ..Default::default()
                             }
