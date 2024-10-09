@@ -47,6 +47,7 @@ async fn main() {
         linux::ChimeraLinux,
         linux::CrunchbangPlusPlus,
         linux::Debian,
+        linux::Deepin,
         linux::Devuan,
         bsd::DragonFlyBSD,
         linux::EasyOS,
@@ -59,6 +60,10 @@ async fn main() {
         linux::Gentoo,
         bsd::GhostBSD,
         linux::GnomeOS,
+        linux::Lmde,
+        linux::KDENeon,
+        linux::LinuxLite,
+        linux::LinuxMint,
     );
 
     let distros = join_futures!(futures, 2, Vec<OS>).distro_sort();
