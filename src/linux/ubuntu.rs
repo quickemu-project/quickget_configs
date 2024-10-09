@@ -356,3 +356,29 @@ impl Distro for Bodhi {
         Some(join_futures!(futures, 2))
     }
 }
+
+const KDENEON_MIRROR: &str = "https://files.kde.org/neon/images/";
+
+pub struct KDENeon;
+impl Distro for KDENeon {
+    const NAME: &'static str = "kdeneon";
+    const PRETTY_NAME: &'static str = "KDE Neon";
+    const HOMEPAGE: Option<&'static str> = Some("https://neon.kde.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Latest and greatest of KDE community software packaged on a rock-solid base.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let releases = ["user", "testing", "unstable", "developer"];
+        let futures = releases.into_iter().map(|release| async move {
+            let url = format!("{KDENEON_MIRROR}{release}/current/neon-{release}-current.iso");
+            let checksum_url = url.replace("iso", "sha256sum");
+            let checksum = capture_page(&checksum_url)
+                .await
+                .and_then(|cs| cs.split_whitespace().next().map(ToString::to_string));
+            Config {
+                release: release.to_string(),
+                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                ..Default::default()
+            }
+        });
+        Some(join_futures!(futures))
+    }
+}
