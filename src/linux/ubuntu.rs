@@ -382,3 +382,37 @@ impl Distro for KDENeon {
         Some(join_futures!(futures))
     }
 }
+
+const LINUXLITE_MIRROR: &str = "https://sourceforge.net/projects/linux-lite/files/";
+
+pub struct LinuxLite;
+impl Distro for LinuxLite {
+    const NAME: &'static str = "linuxlite";
+    const PRETTY_NAME: &'static str = "Linux Lite";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.linuxliteos.com/");
+    const DESCRIPTION: Option<&'static str> = Some("Your first simple, fast and free stop in the world of Linux.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let page = capture_page(LINUXLITE_MIRROR).await?;
+        let release_regex = Regex::new(r#""name":"(\d(?:\.\d+)+)""#).unwrap();
+
+        let mut releases: Vec<String> = release_regex.captures_iter(&page).map(|c| c[1].to_string()).collect();
+        releases.sort_unstable();
+
+        let futures = releases.into_iter().rev().take(5).map(|release| {
+            let url = format!("{LINUXLITE_MIRROR}{release}/linux-lite-{release}-64bit.iso/download");
+            let checksum_url = format!("{LINUXLITE_MIRROR}{release}/linux-lite-{release}-64bit.iso.sha256/download");
+            async move {
+                let checksum = capture_page(&checksum_url)
+                    .await
+                    .and_then(|cs| cs.split_whitespace().next().map(ToString::to_string));
+                Config {
+                    release,
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                    ..Default::default()
+                }
+            }
+        });
+
+        Some(join_futures!(futures))
+    }
+}
