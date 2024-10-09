@@ -1,5 +1,5 @@
 use crate::{
-    store_data::{Config, Distro, Source, WebSource},
+    store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::capture_page,
 };
 use join_futures::join_futures;
@@ -414,5 +414,50 @@ impl Distro for LinuxLite {
         });
 
         Some(join_futures!(futures))
+    }
+}
+
+const LINUXMINT_MIRROR: &str = "https://mirrors.kernel.org/linuxmint/stable/";
+
+pub struct LinuxMint;
+impl Distro for LinuxMint {
+    const NAME: &'static str = "linuxmint";
+    const PRETTY_NAME: &'static str = "Linux Mint";
+    const HOMEPAGE: Option<&'static str> = Some("https://linuxmint.com/");
+    const DESCRIPTION: Option<&'static str> = Some("Designed to work out of the box and comes fully equipped with the apps most people need.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let releases_html = capture_page(LINUXMINT_MIRROR).await?;
+        let releases_regex = Regex::new(r#"href="(\d+(?:\.\d+)?)\/""#).unwrap();
+        let iso_regex = Regex::new(r#"href="(linuxmint-\d+(?:\.\d+)?-(\w+)-64bit.iso)""#).unwrap();
+
+        let releases: Vec<String> = releases_regex.captures_iter(&releases_html).map(|c| c[1].to_string()).collect();
+
+        let futures = releases.into_iter().rev().take(5).map(|release| {
+            let iso_regex = iso_regex.clone();
+            let mirror = format!("{LINUXMINT_MIRROR}{release}/");
+            let checksum_url = mirror.clone() + "sha256sum.txt";
+            async move {
+                let mut checksums = ChecksumSeparation::Whitespace.build(&checksum_url).await;
+                let page = capture_page(&mirror).await?;
+                Some(
+                    iso_regex
+                        .captures_iter(&page)
+                        .map(|c| c.extract())
+                        .map(|(_, [iso, edition])| {
+                            let url = mirror.clone() + iso;
+                            let checksum = checksums.as_mut().and_then(|cs| cs.remove(&format!("*{iso}")));
+                            Config {
+                                release: release.clone(),
+                                edition: Some(edition.to_string()),
+                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                ..Default::default()
+                            }
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            }
+        });
+
+        Some(join_futures!(futures, 2))
     }
 }

@@ -62,6 +62,7 @@ async fn main() {
         linux::Lmde,
         linux::KDENeon,
         linux::LinuxLite,
+        linux::LinuxMint,
     );
 
     let distros = join_futures!(futures, 2, Vec<OS>).distro_sort();
