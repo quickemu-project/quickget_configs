@@ -47,6 +47,7 @@ async fn main() {
         linux::ChimeraLinux,
         linux::CrunchbangPlusPlus,
         linux::Debian,
+        linux::Deepin,
         linux::Devuan,
         bsd::DragonFlyBSD,
         linux::EasyOS,
