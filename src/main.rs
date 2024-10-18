@@ -5,7 +5,7 @@ mod store_data;
 mod utils;
 
 use join_futures::join_futures;
-use std::{fs::File, io::Write};
+use std::{collections::HashSet, fs::File, io::Write};
 use store_data::{ToOS, OS};
 use tokio::spawn;
 
@@ -55,7 +55,6 @@ async fn main() {
         linux::Fedora,
         other::FreeDOS,
         linux::Garuda,
-        linux::Garuda,
         linux::Gentoo,
         bsd::GhostBSD,
         linux::GnomeOS,
@@ -76,11 +75,13 @@ async fn main() {
 
 trait DistroSort {
     fn distro_sort(self) -> Self;
+    fn remove_duplicates(&mut self);
 }
 
 impl DistroSort for Vec<OS> {
     fn distro_sort(mut self) -> Self {
         self.sort_unstable_by(|a, b| a.name.cmp(&b.name));
+        self.remove_duplicates();
         self.iter_mut().for_each(|d| {
             d.releases.sort_unstable_by(|a, b| {
                 let (release_a, release_b) = (a.release.trim_start_matches('v'), b.release.trim_start_matches('v'));
@@ -99,6 +100,12 @@ impl DistroSort for Vec<OS> {
             })
         });
         self
+    }
+    fn remove_duplicates(&mut self) {
+        // The names are guaranteed to already be sorted.
+        self.dedup_by(|a, b| a.name == b.name);
+        let mut set = HashSet::new();
+        self.retain(|d| set.insert(d.pretty_name.clone()));
     }
 }
 
