@@ -247,7 +247,7 @@ impl Distro for BlendOS {
     }
 }
 
-const CACHYOS_KDE_MIRROR: &str = "https://mirror.cachyos.org/ISO/kde/";
+const CACHYOS_MIRROR: &str = "https://mirror.cachyos.org/ISO/";
 
 pub struct CachyOS;
 impl Distro for CachyOS {
@@ -256,38 +256,49 @@ impl Distro for CachyOS {
     const HOMEPAGE: Option<&'static str> = Some("https://cachyos.org/");
     const DESCRIPTION: Option<&'static str> = Some("Designed to deliver lightning-fast speeds and stability, ensuring a smooth and enjoyable computing experience every time you use it.");
     async fn generate_configs() -> Option<Vec<Config>> {
-        let page = capture_page(CACHYOS_KDE_MIRROR).await?;
+        let edition_data = capture_page(CACHYOS_MIRROR).await?;
+        let edition_regex = Regex::new(r#"href="(\w+)\/"#).unwrap();
         let release_regex = Regex::new(r#"href="([0-9]+)/""#).unwrap();
-        let iso_regex = Arc::new(Regex::new(r#"href="(cachyos-([^-]+)-linux-[0-9]+.iso)""#).unwrap());
+        let iso_regex = Regex::new(r#"href="(cachyos-([^-]+)-linux-[0-9]+.iso)""#).unwrap();
 
-        let futures = release_regex.captures_iter(&page).map(|c| {
-            let release = c[1].to_string();
-            let mirror = format!("{CACHYOS_KDE_MIRROR}{release}/");
+        let edition_mirrors = edition_regex
+            .captures_iter(&edition_data)
+            .map(|c| format!("{CACHYOS_MIRROR}{}/", &c[1]));
+
+        let futures = edition_mirrors.map(|edition_mirror| {
             let iso_regex = iso_regex.clone();
+            let release_regex = release_regex.clone();
             async move {
-                let page = capture_page(&mirror).await?;
-                let futures = iso_regex
-                    .captures_iter(&page)
-                    .map(|c| {
-                        let edition = c[2].to_string();
-                        let url = format!("{mirror}{}", &c[1]);
-                        let checksum_url = url.clone() + ".sha256";
-                        let release = release.clone();
-                        async move {
-                            let checksum = capture_page(&checksum_url)
-                                .await
-                                .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
-                            Config {
-                                release,
-                                edition: Some(edition),
-                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
-                                ..Default::default()
-                            }
-                        }
-                    })
-                    .collect::<Vec<_>>();
+                let edition_page = capture_page(&edition_mirror).await?;
+                let futures = release_regex.captures_iter(&edition_page).map(|c| {
+                    let release = c[1].to_string();
+                    let mirror = format!("{edition_mirror}{release}/");
+                    let iso_regex = iso_regex.clone();
 
-                Some(join_futures!(futures))
+                    async move {
+                        let page = capture_page(&mirror).await?;
+                        let futures = iso_regex.captures_iter(&page).map(|c| {
+                            let edition = c[2].to_string();
+                            let url = format!("{mirror}{}", &c[1]);
+                            let checksum_url = url.clone() + ".sha256";
+                            let release = release.clone();
+                            async move {
+                                let checksum = capture_page(&checksum_url)
+                                    .await
+                                    .and_then(|c| c.split_whitespace().next().map(ToString::to_string));
+                                Config {
+                                    release,
+                                    edition: Some(edition),
+                                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                    ..Default::default()
+                                }
+                            }
+                        });
+
+                        Some(join_futures!(futures))
+                    }
+                });
+                Some(join_futures!(futures, 2))
             }
         });
 
