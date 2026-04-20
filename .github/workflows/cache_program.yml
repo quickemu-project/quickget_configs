@@ -23,6 +23,6 @@ jobs:
           key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/main.rs') }}
 
       - name: Start config generation
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@v4
         with:
           event-type: generate_configuration
