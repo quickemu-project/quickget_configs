@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Restore cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: target/release/quickget_ci
           key: ${{ runner.os }}-quickget_ci-${{ hashFiles('**/main.rs') }}
