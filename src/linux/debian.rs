@@ -1,6 +1,6 @@
 use crate::{
     store_data::{ChecksumSeparation, Config, Disk, Distro, Source, WebSource},
-    utils::{capture_page, GatherData, GithubAPI},
+    utils::{arch_from_str, capture_page, GatherData, GithubAPI},
 };
 use join_futures::join_futures;
 use quickemu::config::{Arch, DiskFormat};
@@ -248,6 +248,59 @@ impl Distro for Debian {
     }
 }
 
+const DEEPIN_MIRROR: &str = "https://cdimage.deepin.com/releases/";
+
+pub struct Deepin;
+impl Distro for Deepin {
+    const NAME: &'static str = "deepin";
+    const PRETTY_NAME: &'static str = "Deepin";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.deepin.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Beautiful UI design, intimate human-computer interaction, and friendly community environment make you feel at home.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let release_html = capture_page(DEEPIN_MIRROR).await?;
+        let release_regex = Regex::new(r#"class="name">([\d.]+)\/"#).unwrap();
+        let arch_regex = Regex::new(r#"class="name">(amd64|arm64)\/"#).unwrap();
+
+        let release_data = release_regex.captures_iter(&release_html).map(|c| {
+            let release = c[1].to_string();
+            let release_url = format!("{DEEPIN_MIRROR}{release}/");
+            let arch_regex = arch_regex.clone();
+            async move {
+                let page = capture_page(&release_url).await?;
+                let urls = arch_regex
+                    .captures_iter(&page)
+                    .filter_map(|a| {
+                        let arch_str = a[1].to_string();
+                        let arch = arch_from_str(&arch_str)?;
+                        Some((format!("{release_url}{arch_str}/"), arch_str, arch))
+                    })
+                    .collect::<Vec<_>>();
+                let urls = if urls.is_empty() { vec![(release_url, "amd64".into(), Arch::x86_64)] } else { urls };
+                Some((release, urls))
+            }
+        });
+        let futures = join_futures!(release_data).into_iter().flatten().flat_map(|(release, urls)| {
+            urls.into_iter().map(move |(url, arch_str, arch)| {
+                let iso_url = format!("{url}deepin-desktop-community-{release}-{arch_str}.iso");
+                let checksum_url = url + "SHA256SUMS";
+                let release = release.clone();
+                async move {
+                    let checksum = capture_page(&checksum_url)
+                        .await
+                        .and_then(|cs| cs.split_whitespace().next().map(ToString::to_string));
+                    Config {
+                        release,
+                        arch,
+                        iso: Some(vec![Source::Web(WebSource::new(iso_url, checksum, None, None))]),
+                        ..Default::default()
+                    }
+                }
+            })
+        });
+        Some(join_futures!(futures))
+    }
+}
+
 const DEVUAN_MIRROR: &str = "https://files.devuan.org/";
 
 pub struct Devuan;
@@ -443,5 +496,39 @@ impl Distro for EndlessOS {
         });
 
         Some(join_futures!(futures, 3))
+    }
+}
+
+const LMDE_MIRROR: &str = "https://mirrors.edge.kernel.org/linuxmint/debian/";
+
+pub struct Lmde;
+impl Distro for Lmde {
+    const NAME: &'static str = "lmde";
+    const PRETTY_NAME: &'static str = "Linux Mint Debian Edition";
+    const HOMEPAGE: Option<&'static str> = Some("https://linuxmint.com/download_lmde.php");
+    const DESCRIPTION: Option<&'static str> = Some("Aims to be as similar as possible to Linux Mint, but without using Ubuntu. The package base is provided by Debian instead.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let page = capture_page(LMDE_MIRROR).await?;
+        let mut checksums = ChecksumSeparation::Whitespace
+            .build(&format!("{LMDE_MIRROR}sha256sum.txt"))
+            .await;
+        let iso_regex = Regex::new(r#"href="(lmde-(\d+(?:\.\d+)?)-(\w+)-64bit.iso)""#).unwrap();
+
+        Some(
+            iso_regex
+                .captures_iter(&page)
+                .map(|c| c.extract())
+                .map(|(_, [iso, release, edition])| {
+                    let checksum = checksums.as_mut().and_then(|cs| cs.remove(&format!("*{iso}")));
+                    let url = format!("{LMDE_MIRROR}{iso}");
+                    Config {
+                        release: release.to_string(),
+                        edition: Some(edition.to_string()),
+                        iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                        ..Default::default()
+                    }
+                })
+                .collect(),
+        )
     }
 }
