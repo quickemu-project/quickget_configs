@@ -1,5 +1,5 @@
 use crate::{
-    store_data::{Config, Distro, Source, WebSource},
+    store_data::{ChecksumSeparation, Config, Distro, Source, WebSource},
     utils::capture_page,
 };
 use join_futures::join_futures;
@@ -350,6 +350,111 @@ impl Distro for Bodhi {
                     }
                 });
                 Some(join_futures!(futures, 0))
+            }
+        });
+
+        Some(join_futures!(futures, 2))
+    }
+}
+
+const KDENEON_MIRROR: &str = "https://files.kde.org/neon/images/";
+
+pub struct KDENeon;
+impl Distro for KDENeon {
+    const NAME: &'static str = "kdeneon";
+    const PRETTY_NAME: &'static str = "KDE Neon";
+    const HOMEPAGE: Option<&'static str> = Some("https://neon.kde.org/");
+    const DESCRIPTION: Option<&'static str> = Some("Latest and greatest of KDE community software packaged on a rock-solid base.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let releases = ["user", "testing", "unstable", "developer"];
+        let futures = releases.into_iter().map(|release| async move {
+            let url = format!("{KDENEON_MIRROR}{release}/current/neon-{release}-current.iso");
+            let checksum_url = url.replace("iso", "sha256sum");
+            let checksum = capture_page(&checksum_url)
+                .await
+                .and_then(|cs| cs.split_whitespace().next().map(ToString::to_string));
+            Config {
+                release: release.to_string(),
+                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                ..Default::default()
+            }
+        });
+        Some(join_futures!(futures))
+    }
+}
+
+const LINUXLITE_MIRROR: &str = "https://sourceforge.net/projects/linux-lite/files/";
+
+pub struct LinuxLite;
+impl Distro for LinuxLite {
+    const NAME: &'static str = "linuxlite";
+    const PRETTY_NAME: &'static str = "Linux Lite";
+    const HOMEPAGE: Option<&'static str> = Some("https://www.linuxliteos.com/");
+    const DESCRIPTION: Option<&'static str> = Some("Your first simple, fast and free stop in the world of Linux.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let page = capture_page(LINUXLITE_MIRROR).await?;
+        let release_regex = Regex::new(r#""name":"(\d(?:\.\d+)+)""#).unwrap();
+
+        let mut releases: Vec<String> = release_regex.captures_iter(&page).map(|c| c[1].to_string()).collect();
+        releases.sort_unstable();
+
+        let futures = releases.into_iter().rev().take(5).map(|release| {
+            let url = format!("{LINUXLITE_MIRROR}{release}/linux-lite-{release}-64bit.iso/download");
+            let checksum_url = format!("{LINUXLITE_MIRROR}{release}/linux-lite-{release}-64bit.iso.sha256/download");
+            async move {
+                let checksum = capture_page(&checksum_url)
+                    .await
+                    .and_then(|cs| cs.split_whitespace().next().map(ToString::to_string));
+                Config {
+                    release,
+                    iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                    ..Default::default()
+                }
+            }
+        });
+
+        Some(join_futures!(futures))
+    }
+}
+
+const LINUXMINT_MIRROR: &str = "https://mirrors.kernel.org/linuxmint/stable/";
+
+pub struct LinuxMint;
+impl Distro for LinuxMint {
+    const NAME: &'static str = "linuxmint";
+    const PRETTY_NAME: &'static str = "Linux Mint";
+    const HOMEPAGE: Option<&'static str> = Some("https://linuxmint.com/");
+    const DESCRIPTION: Option<&'static str> = Some("Designed to work out of the box and comes fully equipped with the apps most people need.");
+    async fn generate_configs() -> Option<Vec<Config>> {
+        let releases_html = capture_page(LINUXMINT_MIRROR).await?;
+        let releases_regex = Regex::new(r#"href="(\d+(?:\.\d+)?)\/""#).unwrap();
+        let iso_regex = Regex::new(r#"href="(linuxmint-\d+(?:\.\d+)?-(\w+)-64bit.iso)""#).unwrap();
+
+        let releases: Vec<String> = releases_regex.captures_iter(&releases_html).map(|c| c[1].to_string()).collect();
+
+        let futures = releases.into_iter().rev().take(5).map(|release| {
+            let iso_regex = iso_regex.clone();
+            let mirror = format!("{LINUXMINT_MIRROR}{release}/");
+            let checksum_url = mirror.clone() + "sha256sum.txt";
+            async move {
+                let mut checksums = ChecksumSeparation::Whitespace.build(&checksum_url).await;
+                let page = capture_page(&mirror).await?;
+                Some(
+                    iso_regex
+                        .captures_iter(&page)
+                        .map(|c| c.extract())
+                        .map(|(_, [iso, edition])| {
+                            let url = mirror.clone() + iso;
+                            let checksum = checksums.as_mut().and_then(|cs| cs.remove(&format!("*{iso}")));
+                            Config {
+                                release: release.clone(),
+                                edition: Some(edition.to_string()),
+                                iso: Some(vec![Source::Web(WebSource::new(url, checksum, None, None))]),
+                                ..Default::default()
+                            }
+                        })
+                        .collect::<Vec<_>>(),
+                )
             }
         });
 
